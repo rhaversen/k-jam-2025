@@ -267,6 +267,75 @@ func _ready() -> void:
 			key.position = Vector3(x, y, z)
 			desk.add_child(key)
 
+
+# ------------------------------------------------------------
+# HELPER FUNCTIONS  (these go AFTER _ready(), not indented)
+# ------------------------------------------------------------
+
+func make_poster_material(texture_path: String, poster_size) -> StandardMaterial3D:
+	var tex := load(texture_path)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = tex
+
+	# Figure out the poster's width/height regardless of Vector2 or Vector3
+	var poster_w: float = 1.0
+	var poster_h: float = 1.0
+	if poster_size is Vector2:
+		poster_w = poster_size.x
+		poster_h = poster_size.y
+	elif poster_size is Vector3:
+		poster_w = poster_size.x
+		poster_h = poster_size.y
+
+	if tex is Texture2D and poster_h != 0.0:
+		var img_size = tex.get_size()
+		var img_aspect: float = float(img_size.x) / float(img_size.y)
+		var poster_aspect: float = poster_w / poster_h
+
+		# Scale to preserve image aspect on the poster
+		var scale_x := 1.0
+		var scale_y := 1.0
+		if img_aspect > poster_aspect:
+			# image is wider -> letterbox vertically
+			scale_x = poster_aspect / img_aspect
+		else:
+			# image is taller -> letterbox horizontally
+			scale_y = img_aspect / poster_aspect
+
+		mat.uv1_scale = Vector3(scale_x, scale_y, 1.0)
+		# Center the image so the “letterbox” is even on both sides
+		mat.uv1_offset = Vector3((1.0 - scale_x) * 0.5, (1.0 - scale_y) * 0.5, 0.0)
+	else:
+		mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
+		mat.uv1_offset = Vector3(0.0, 0.0, 0.0)
+
+	# Optional general look
+	mat.roughness = 0.4
+	mat.albedo_color = Color(1, 1, 1)
+	return mat
+
+func _add_posters() -> void:
+	# ----- Left poster -----
+	var poster_back_left := MeshInstance3D.new()
+	var poster_mesh_left := PlaneMesh.new()
+	poster_mesh_left.size = Vector2(1.0, 0.7)
+	poster_back_left.mesh = poster_mesh_left
+	poster_back_left.material_override = make_poster_material("res://textures/poster1.png", poster_mesh_left.size)
+	poster_back_left.position = Vector3(-0.8, 0.6, -1.0)
+	poster_back_left.rotation_degrees = Vector3(90, 180, 0)  # face inward
+	add_child(poster_back_left)
+
+	# ----- Right poster -----
+	var poster_back_right := MeshInstance3D.new()
+	var poster_mesh_right := PlaneMesh.new()
+	poster_mesh_right.size = Vector2(1.0, 0.7)
+	poster_back_right.mesh = poster_mesh_right
+	poster_back_right.material_override = make_poster_material("res://textures/poster2.png", poster_mesh_right.size)
+	poster_back_right.position = Vector3(0.8, 0.6, -1.0)
+	poster_back_right.rotation_degrees = Vector3(90, 180, 0)
+	add_child(poster_back_right)
+
+
 	## ----- CHAIR -----
 	#var chair := MeshInstance3D.new()
 	#chair.mesh = BoxMesh.new()
