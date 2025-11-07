@@ -156,7 +156,7 @@ func _ready() -> void:
 	mouse_line.position = Vector3(0, 0.022, -0.04)
 	mouse.add_child(mouse_line)
 
-	 # ----- COFFEE MUG -----
+	# ----- COFFEE MUG -----
 	var mug := MeshInstance3D.new()
 	var mug_mesh := CylinderMesh.new()
 	mug_mesh.top_radius = 0.1
@@ -165,12 +165,107 @@ func _ready() -> void:
 	mug.mesh = mug_mesh
 
 	var mug_mat := StandardMaterial3D.new()
-	mug_mat.albedo_color = Color(0.9, 0.9, 0.9)
+	mug_mat.albedo_color = Color(0.9, 0.9, 0.9)  # white ceramic
 	mug_mat.roughness = 0.3
 	mug.material_override = mug_mat
 
-	mug.position = Vector3(0.8, -0.42, -1.55)  # ✅ moved slightly right
+	mug.position = Vector3(0.8, -0.42, -1.55)
 	desk.add_child(mug)
+
+	# ----- MUG HANDLE (C-shaped, attached to mug) -----
+	var handle_mat := mug_mat  # reuse mug material
+
+	# Top segment
+	var handle_top := MeshInstance3D.new()
+	var mesh_top := CylinderMesh.new()
+	mesh_top.top_radius = 0.02
+	mesh_top.bottom_radius = 0.02
+	mesh_top.height = 0.06
+	handle_top.mesh = mesh_top
+	handle_top.material_override = handle_mat
+	handle_top.rotation_degrees = Vector3(0, 0, 90)
+	handle_top.position = Vector3(0.12, 0.1, 0.05)
+	mug.add_child(handle_top)
+
+	# Middle segment
+	var handle_mid := MeshInstance3D.new()
+	var mesh_mid := CylinderMesh.new()
+	mesh_mid.top_radius = 0.02
+	mesh_mid.bottom_radius = 0.02
+	mesh_mid.height = 0.08
+	handle_mid.mesh = mesh_mid
+	handle_mid.material_override = handle_mat
+	handle_mid.rotation_degrees = Vector3(0, 0, 0)
+	handle_mid.position = Vector3(0.14, 0.07, 0.05)
+	mug.add_child(handle_mid)
+
+	# Bottom segment
+	var handle_bottom := MeshInstance3D.new()
+	var mesh_bottom := CylinderMesh.new()
+	mesh_bottom.top_radius = 0.02
+	mesh_bottom.bottom_radius = 0.02
+	mesh_bottom.height = 0.06
+	handle_bottom.mesh = mesh_bottom
+	handle_bottom.material_override = handle_mat
+	handle_bottom.rotation_degrees = Vector3(0, 0, 90)
+	handle_bottom.position = Vector3(0.12, -0.02, -0.03)
+	mug.add_child(handle_bottom)
+
+	# ----- COFFEE SURFACE -----
+	var coffee_surface := MeshInstance3D.new()
+	var coffee_mesh := CylinderMesh.new()
+	coffee_mesh.top_radius = 0.075  # smaller radius for visible rim
+	coffee_mesh.bottom_radius = 0.075
+	coffee_mesh.height = 0.001  # flat disc
+	coffee_surface.mesh = coffee_mesh
+
+	var coffee_mat := StandardMaterial3D.new()
+	coffee_mat.albedo_color = Color(0.25, 0.12, 0.05)  # coffee brown
+	coffee_mat.roughness = 0.4
+	coffee_surface.material_override = coffee_mat
+
+	coffee_surface.position = Vector3(0.0, 0.125, 0.0)  # just below mug rim
+	mug.add_child(coffee_surface)
+
+
+	
+		# ----- KEYBOARD -----
+	var keyboard_base := MeshInstance3D.new()
+	var kb_mesh := BoxMesh.new()
+	kb_mesh.size = Vector3(0.7, 0.05, 0.28)  # longer base stays
+	keyboard_base.mesh = kb_mesh
+
+	var kb_mat := StandardMaterial3D.new()
+	kb_mat.albedo_color = Color(0.3, 0.3, 0.3)  # same as mouse body
+	kb_mat.roughness = 0.6
+	kb_mat.metallic = 0.05
+	keyboard_base.material_override = kb_mat
+
+	keyboard_base.position = Vector3(-0.05, -0.43, -1.55)  # close to mouse
+	desk.add_child(keyboard_base)
+
+	# Create rows of keycaps
+	var key_mat := StandardMaterial3D.new()
+	key_mat.albedo_color = Color(0.05, 0.05, 0.05)  # darker keycaps
+	key_mat.roughness = 0.8
+
+	var key_size := Vector3(0.05, 0.02, 0.05)
+	var start_x := -0.35
+	var start_z := -1.43
+
+	for row in range(4):  # ✅ reduced to 4 rows
+		for col in range(11):  # ✅ keep 11 columns
+			var key := MeshInstance3D.new()
+			var key_mesh := BoxMesh.new()
+			key_mesh.size = key_size
+			key.mesh = key_mesh
+			key.material_override = key_mat
+
+			var x := start_x + col * 0.06
+			var y := -0.40
+			var z := start_z - row * 0.06
+			key.position = Vector3(x, y, z)
+			desk.add_child(key)
 
 	# ----- CHAIR -----
 	var chair := MeshInstance3D.new()
