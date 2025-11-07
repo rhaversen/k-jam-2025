@@ -35,7 +35,6 @@ https://www.youtube.com/watch?v=wfYbgdo8e-8
 Pre-collapse
 Pre-discovary
 
-
 *** Focus
 Story telling
 
@@ -45,6 +44,7 @@ The goal isn’t to “win” against dissociation, but to understand it — by 
 Walking simulator
 Like standly parable
 Environmental
+Rythm/Typing Mini-games
 
 *** Mechanics
 Split Audio,
@@ -65,66 +65,43 @@ High stess: The camera detaches slightly behind or above the player’s body.
 
 * Stress induced psychosis
 ** 1. Perceptual Distortions
-Hallucinations
+- Hallucinations
 - Auditory: Hearing voices (commenting, criticizing, or giving commands).
 - Visual: Seeing shapes, shadows, or figures that aren’t there.
 - Tactile / Sensory: Feeling touches, temperature changes, or movements that aren’t real.
-
-Altered senses
-Colors may seem more intense or muted.
-Sounds may be louder, distorted, or delayed.
-Objects may appear to “move” or change shape.
+- Altered senses
+- Colors may seem more intense or muted.
+- Sounds may be louder, distorted, or delayed.
+- Objects may appear to “move” or change shape.
 
 ** 2. Thought and Cognitive Changes
+- Delusions (false beliefs)
+- Feeling watched, persecuted, or controlled.
+- Believing personal experiences have unusual or symbolic meaning.
+- Disorganized thinking
+- Jumping from topic to topic.
+- Difficulty concentrating or forming coherent sentences.
+- Memory gaps
+- Partial amnesia or “blackouts.”
+- Confusing dreams with reality.
 
-Delusions (false beliefs)
+** 3. Emotional Changes
+- Intense fear, paranoia, or anxiety.
+- Rapid mood swings (from calm to terrified).
+- Sense of unreality or detachment (derealization/depersonalization).
 
-Feeling watched, persecuted, or controlled.
+** 4. Behavioral Effects
+- Confusion or disorientation in familiar surroundings.
+- Impulsivity or unusual actions that don’t match the situation.
+- Withdrawal from social interaction.
+- Sometimes hyperactivity or agitation, sometimes lethargy.
 
-Believing personal experiences have unusual or symbolic meaning.
+** 5. Physiological Reactions
+- Heart racing, sweating, hyperventilation due to anxiety.
+- Sleep disruption, which worsens perception and stress.
+- Sensory overload from bright lights, loud sounds, or crowded spaces.
 
-Disorganized thinking
-
-Jumping from topic to topic.
-
-Difficulty concentrating or forming coherent sentences.
-
-Memory gaps
-
-Partial amnesia or “blackouts.”
-
-Confusing dreams with reality.
-
-3. Emotional Changes
-
-Intense fear, paranoia, or anxiety.
-
-Rapid mood swings (from calm to terrified).
-
-Sense of unreality or detachment (derealization/depersonalization).
-
-4. Behavioral Effects
-
-Confusion or disorientation in familiar surroundings.
-
-Impulsivity or unusual actions that don’t match the situation.
-
-Withdrawal from social interaction.
-
-Sometimes hyperactivity or agitation, sometimes lethargy.
-
-5. Physiological Reactions
-
-Heart racing, sweating, hyperventilation due to anxiety.
-
-Sleep disruption, which worsens perception and stress.
-
-Sensory overload from bright lights, loud sounds, or crowded spaces.
-
-6. Duration and Triggers
-
-Usually short-lived (hours to days) if the stressor is removed.
-
-Often triggered by extreme emotional trauma, sleep deprivation, or severe anxiety.
-
-May resolve naturally, but can recur if stress persists.
+** 6. Duration and Triggers
+- Usually short-lived (hours to days) if the stressor is removed.
+- Often triggered by extreme emotional trauma, sleep deprivation, or severe anxiety.
+- May resolve naturally, but can recur if stress persists.
