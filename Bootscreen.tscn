@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://4pqund3nukl7"]
+
+[ext_resource type="Script" uid="uid://5d46w2ol3glc" path="res://scripts/boot_screen.gd" id="1_01two"]
+
+[node name="Node2d" type="Node2D"]
+script = ExtResource("1_01two")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.92156863, 0.34509805, 0, 1)
