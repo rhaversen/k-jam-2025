@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=29 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://dl2grq3dproqn" path="res://scripts/floor_mesh.gd" id="2_cdqbm"]
 [ext_resource type="Script" uid="uid://csujpnt82ita5" path="res://scripts/office.gd" id="3_a0tk4"]
 [ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
-[ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
 [ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
 [ext_resource type="Script" uid="uid://cdmnois872y32" path="res://area_3d.gd" id="9_4arys"]
 [ext_resource type="Shader" uid="uid://l6y0mcah5cqj" path="res://shader/camera_surface_shader.gdshader" id="10_6iypd"]
