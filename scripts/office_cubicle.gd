@@ -267,6 +267,9 @@ func _ready() -> void:
 			key.position = Vector3(x, y, z)
 			desk.add_child(key)
 
+	# Posters
+	_add_posters()
+
 
 # ------------------------------------------------------------
 # HELPER FUNCTIONS  (these go AFTER _ready(), not indented)
@@ -315,24 +318,39 @@ func make_poster_material(texture_path: String, poster_size) -> StandardMaterial
 	return mat
 
 func _add_posters() -> void:
-	# ----- Left poster -----
+	# ----- Left poster (auto-size from texture aspect) -----
 	var poster_back_left := MeshInstance3D.new()
 	var poster_mesh_left := PlaneMesh.new()
-	poster_mesh_left.size = Vector2(1.0, 0.7)
+	var tex_left := load("res://textures/poster1.png")
+	var target_h := 0.8
+	var size_left := Vector2(1.0, 0.7)
+	if tex_left is Texture2D and target_h > 0.0:
+		var img_size_left := (tex_left as Texture2D).get_size()
+		if img_size_left.y != 0:
+			var aspect_left := float(img_size_left.x) / float(img_size_left.y)
+			size_left = Vector2(aspect_left * target_h, target_h)
+	poster_mesh_left.size = size_left
 	poster_back_left.mesh = poster_mesh_left
 	poster_back_left.material_override = make_poster_material("res://textures/poster1.png", poster_mesh_left.size)
-	poster_back_left.position = Vector3(-0.8, 0.6, -1.0)
-	poster_back_left.rotation_degrees = Vector3(90, 180, 0)  # face inward
+	poster_back_left.position = Vector3(-0.8, 0.4, -2.445)
+	poster_back_left.rotation_degrees = Vector3(90, 0, 0)
 	add_child(poster_back_left)
 
-	# ----- Right poster -----
+	# ----- Right poster (auto-size from texture aspect) -----
 	var poster_back_right := MeshInstance3D.new()
 	var poster_mesh_right := PlaneMesh.new()
-	poster_mesh_right.size = Vector2(1.0, 0.7)
+	var tex_right := load("res://textures/poster2.png")
+	var size_right := Vector2(1.0, 0.7)
+	if tex_right is Texture2D and target_h > 0.0:
+		var img_size_right := (tex_right as Texture2D).get_size()
+		if img_size_right.y != 0:
+			var aspect_right := float(img_size_right.x) / float(img_size_right.y)
+			size_right = Vector2(aspect_right * target_h, target_h)
+	poster_mesh_right.size = size_right
 	poster_back_right.mesh = poster_mesh_right
 	poster_back_right.material_override = make_poster_material("res://textures/poster2.png", poster_mesh_right.size)
-	poster_back_right.position = Vector3(0.8, 0.6, -1.0)
-	poster_back_right.rotation_degrees = Vector3(90, 180, 0)
+	poster_back_right.position = Vector3(0.8, 0.4, -2.445)
+	poster_back_right.rotation_degrees = Vector3(90, 0, 0)
 	add_child(poster_back_right)
 
 
