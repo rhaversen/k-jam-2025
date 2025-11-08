@@ -4,9 +4,15 @@ const TARGET_FILE := "Wells_Report.docx"
 const TARGET_PATH := ["Projects", "Client_Phoenix", "Quarterly", "Drafts"]
 const MAX_FOLDERS := 67
 const EXIT_SCENE_PATH := "res://node_3d.tscn"
+const FAIL_SCENE_PATH := "res://scenes/folderfail.tscn"
+const FAIL_FADE_DURATION := 1.25
+const FAIL_OVERLAY_BASE_COLOR := Color(0.95, 0.0, 0.0, 0.65)
+const FAIL_OVERLAY_FINAL_COLOR := Color(0.95, 0.0, 0.0, 1.0)
+const SUCCESS_RELIEF_AUDIO_PATH := "res://sound/success_breath.wav"
 
 var folder_tree: Dictionary
 var mail_window: PanelContainer
+var notes_window: PanelContainer
 var mail_message_window: PanelContainer
 var mail_message_label: RichTextLabel
 var mail_message_base_text: String = ""
@@ -15,12 +21,28 @@ var mission_started: bool = false
 var mission_completed: bool = false
 var mission_failed: bool = false
 var countdown_remaining: int = 0
-const MISSION_DURATION_SECONDS := 300  # 5 minutes
+const MISSION_DURATION_SECONDS := 60  # 60 seconds
 var send_prompt_window: PanelContainer
 var file_icon_texture: Texture2D
+var ticker_player: AudioStreamPlayer
+var tick_stream: AudioStreamWAV
+var stress_overlay: ColorRect
+var stress_intensity: float = 0.0
+var stress_drone_player: AudioStreamPlayer
+var drone_stream: AudioStreamWAV
+var success_relief_player: AudioStreamPlayer
+var success_relief_stream: AudioStream
+var desktop_shake_amount: float = 0.0
+var shake_timer: float = 0.0
 @onready var cursor: Sprite2D
 var open_windows: Dictionary = {}
 var desktop_container: Control
+var fail_overlay: ColorRect
+var fail_sequence_started: bool = false
+var fail_fade_active: bool = false
+var fail_fade_elapsed: float = 0.0
+var fail_scene_change_triggered: bool = false
+var fail_delay_timer: SceneTreeTimer
 
 
 func _ready() -> void:
@@ -39,12 +61,19 @@ func _ready() -> void:
 	desktop_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desktop_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(desktop_container)
+	desktop_container.set_meta("shake_last_offset", Vector2.ZERO)
+	desktop_container.set_meta("shake_phase", randf() * TAU)
 	_generate_folder_tree()
 	_show_desktop_folders(folder_tree["Desktop"], Vector2(80, 100))
 	
 	# Cleanup any stray top-level folder icons left from earlier edits/runs
 	_cleanup_orphan_icons()
 	_create_exit_button()
+	_ensure_tick_player()
+	_ensure_stress_overlay()
+	_ensure_fail_overlay()
+	_ensure_drone_player()
+	_ensure_success_relief_player()
 	
 	# Create cursor last to ensure it's on top
 	_create_cursor()
@@ -119,28 +148,47 @@ var coworkers: Array = [
 	{"name": "Emma Williams", "title": "Product Owner", "status": "Offline", "has_new_mail": false}
 ]
 
+var mail_window_default_size: Vector2 = Vector2.ZERO
+
 func _create_mail_window() -> void:
 	mail_window = _create_window("Mail", Vector2(get_viewport_rect().size.x - 500, 50), Vector2(450, 300))
+	if mail_window and is_instance_valid(mail_window):
+		mail_window_default_size = mail_window.custom_minimum_size
 	_show_mail_contacts()  # Start by showing contacts instead of direct message
 	add_child(mail_window)
 
 func _show_mail_contacts() -> void:
 	var content_area = _find_child_by_name(mail_window, "content") if mail_window else null
 	if content_area:
+		var target_window_size := mail_window_default_size
+		if mail_window and is_instance_valid(mail_window):
+			if target_window_size == Vector2.ZERO:
+				target_window_size = mail_window.custom_minimum_size
+			mail_window.custom_minimum_size = target_window_size
+			mail_window.size = target_window_size
+
 		# Clear existing content
 		for child in content_area.get_children():
 			child.queue_free()
 		
 		# Create a VBox for contacts
 		var contact_list := VBoxContainer.new()
+		contact_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		contact_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var target_height := target_window_size.y if target_window_size != Vector2.ZERO else 300.0
+		contact_list.custom_minimum_size = Vector2(0, max(0.0, target_height - 40.0))
 		contact_list.add_theme_constant_override("separation", 2)
 		content_area.add_child(contact_list)
+
+		var button_width := 420.0
+		if target_window_size.x > 0.0:
+			button_width = max(320.0, target_window_size.x - 30.0)
 		
 		# Add each coworker as a button
 		for coworker in coworkers:
 			var contact_button := Button.new()
 			contact_button.flat = true
-			contact_button.custom_minimum_size = Vector2(420, 50)
+			contact_button.custom_minimum_size = Vector2(button_width, 50)
 			
 			# Create a horizontal layout for contact info
 			var hbox := HBoxContainer.new()
@@ -194,9 +242,14 @@ func _show_mail_contacts() -> void:
 			# Connect the button click
 			contact_button.connect("pressed", Callable(self, "_on_contact_clicked").bind(coworker.name))
 
+		# Maintain window size after rebuilding contents
+		if mail_window and is_instance_valid(mail_window) and target_window_size != Vector2.ZERO:
+			mail_window.custom_minimum_size = target_window_size
+			mail_window.set_deferred("size", target_window_size)
+
 func _on_contact_clicked(contact_name: String) -> void:
 	if contact_name == "Alex Pendell":
-		var urgent_text := "[b]From:[/b] Alex Pendell\n[b]Subject:[/b] URGENT: Missing report\n\nI need the [color=yellow]%s[/color] in the next five minutes. If I don't have it, I'm filing a complaint with the boss. Hop to it!".format([TARGET_FILE])
+		var urgent_text := "[b]From:[/b] Alex Pendell\n[b]Subject:[/b] URGENT: Missing report\n\nI need the [color=yellow]%s[/color] in the next minute. If I don't have it, I'm filing a complaint with the boss. Hop to it!".format([TARGET_FILE])
 		_show_mail_message(urgent_text, true)
 		# Update coworker status to show message read
 		var updated := false
@@ -224,11 +277,13 @@ func _trigger_new_mail() -> void:
 			if mission_timer:
 				mission_timer.stop()
 			_close_send_prompt()
+			_stop_tick()
 			break
 
+
 func _create_notes_window() -> void:
-	var notes := _create_window("Notes", Vector2(get_viewport_rect().size.x - 500, 360), Vector2(400, 200))
-	var content_area = _find_child_by_name(notes, "content")
+	notes_window = _create_window("Notes", Vector2(get_viewport_rect().size.x - 500, 360), Vector2(400, 200))
+	var content_area = _find_child_by_name(notes_window, "content")
 	var text := TextEdit.new()
 	text.text = "• Find missing file\n• Reply to Alex\n• Don't delete the wrong folder!"
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -238,8 +293,10 @@ func _create_notes_window() -> void:
 	if content_area:
 		content_area.add_child(text)
 	else:
-		notes.add_child(text)
-	add_child(notes)
+		notes_window.add_child(text)
+	add_child(notes_window)
+	notes_window.set_meta("shake_last_offset", Vector2.ZERO)
+	notes_window.set_meta("shake_phase", randf() * TAU)
 
 
 func _create_window(title: String, pos: Vector2, size: Vector2, is_dark: bool = false) -> PanelContainer:
@@ -247,6 +304,13 @@ func _create_window(title: String, pos: Vector2, size: Vector2, is_dark: bool = 
 	var panel := PanelContainer.new()
 	panel.position = pos
 	panel.custom_minimum_size = size
+	panel.size = size
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.name = title
+	panel.set_meta("shake_last_offset", Vector2.ZERO)
+	panel.set_meta("shake_phase", randf() * TAU)
 
 	# Create a VBox to hold header and content in proper order
 	var vbox := VBoxContainer.new()
@@ -480,12 +544,18 @@ func _start_mission_countdown() -> void:
 		mission_timer.timeout.connect(Callable(self, "_on_mission_timer_timeout"))
 		add_child(mission_timer)
 
+	_reset_fail_state()
+	if success_relief_player and is_instance_valid(success_relief_player):
+		success_relief_player.stop()
 	countdown_remaining = MISSION_DURATION_SECONDS
 	mission_started = true
 	mission_completed = false
 	mission_failed = false
 	mission_timer.start()
 	_update_mail_message_text()
+	_update_stress_effects()
+	_play_tick()
+	_start_stress_drone()
 
 
 func _on_mission_timer_timeout() -> void:
@@ -495,6 +565,11 @@ func _on_mission_timer_timeout() -> void:
 
 	countdown_remaining = max(countdown_remaining - 1, 0)
 	_update_mail_message_text()
+	_play_tick()
+	_update_stress_effects()
+	if countdown_remaining <= 5 and mission_started:
+		var echo_timer: SceneTreeTimer = get_tree().create_timer(0.2)
+		echo_timer.timeout.connect(_play_tick)
 
 	if countdown_remaining <= 0:
 		mission_timer.stop()
@@ -504,14 +579,17 @@ func _on_mission_timer_timeout() -> void:
 
 
 func _complete_mission(success: bool) -> void:
+	_reset_fail_state()
 	mission_completed = success
 	mission_started = false
 	mission_failed = not success
 	if mission_timer:
 		mission_timer.stop()
+	_stop_tick()
 	_close_send_prompt()
 	if success:
 		mail_message_base_text = ""
+		_play_success_relief_audio()
 	else:
 		_handle_mission_failure()
 
@@ -519,7 +597,56 @@ func _complete_mission(success: bool) -> void:
 func _handle_mission_failure() -> void:
 	_close_send_prompt()
 	mail_message_base_text = ""
+	_stop_tick()
 	_show_mail_message("[b]From:[/b] Alex Pendell\n[b]Subject:[/b] Escalating to management\n\nYou missed the deadline. I'm looping in our boss. We'll talk about this later.")
+	_start_fail_sequence()
+
+
+func _start_fail_sequence() -> void:
+	if fail_sequence_started:
+		return
+
+	_ensure_fail_overlay()
+	fail_sequence_started = true
+	fail_fade_active = false
+	fail_fade_elapsed = 0.0
+	fail_scene_change_triggered = false
+	var fade_callable := Callable(self, "_begin_fail_fade")
+	if fail_delay_timer and is_instance_valid(fail_delay_timer):
+		if fail_delay_timer.timeout.is_connected(fade_callable):
+			fail_delay_timer.timeout.disconnect(fade_callable)
+	fail_delay_timer = null
+	if fail_overlay and is_instance_valid(fail_overlay):
+		fail_overlay.visible = true
+		fail_overlay.color = FAIL_OVERLAY_BASE_COLOR
+	var delay := randf_range(4.0, 5.0)
+	fail_delay_timer = get_tree().create_timer(delay)
+	fail_delay_timer.timeout.connect(fade_callable)
+
+
+func _begin_fail_fade() -> void:
+	fail_delay_timer = null
+	fail_fade_active = true
+	fail_fade_elapsed = 0.0
+	_ensure_fail_overlay()
+	if fail_overlay and is_instance_valid(fail_overlay):
+		fail_overlay.visible = true
+		fail_overlay.color = FAIL_OVERLAY_BASE_COLOR
+
+
+func _reset_fail_state() -> void:
+	var fade_callable := Callable(self, "_begin_fail_fade")
+	if fail_delay_timer:
+		if is_instance_valid(fail_delay_timer) and fail_delay_timer.timeout.is_connected(fade_callable):
+			fail_delay_timer.timeout.disconnect(fade_callable)
+	fail_delay_timer = null
+	fail_sequence_started = false
+	fail_fade_active = false
+	fail_fade_elapsed = 0.0
+	fail_scene_change_triggered = false
+	if fail_overlay and is_instance_valid(fail_overlay):
+		fail_overlay.visible = false
+		fail_overlay.color = Color(FAIL_OVERLAY_BASE_COLOR.r, FAIL_OVERLAY_BASE_COLOR.g, FAIL_OVERLAY_BASE_COLOR.b, 0.0)
 
 
 # --- FOLDER GENERATION ---
@@ -734,6 +861,61 @@ func _process(delta: float) -> void:
 		if cursor.get_index() != get_child_count() - 1:
 			move_child(cursor, get_child_count() - 1)
 
+	if stress_overlay and is_instance_valid(stress_overlay) and stress_overlay.visible:
+		var base_alpha: float = lerp(0.0, 0.65, stress_intensity)
+		if countdown_remaining <= 10 and mission_started:
+			base_alpha = max(base_alpha, 0.5)
+		var pulse_speed: float = 110.0 if countdown_remaining <= 10 else 180.0
+		var pulse_strength: float = 0.11 if countdown_remaining <= 10 else 0.06
+		var pulse: float = pulse_strength * sin(float(Time.get_ticks_msec()) / pulse_speed)
+		var alpha: float = clamp(base_alpha + pulse, 0.0, 0.7)
+		stress_overlay.color = Color(0.9, 0.1, 0.1, alpha)
+
+	if mail_window and is_instance_valid(mail_window) and mail_window_default_size != Vector2.ZERO:
+		var desired_size := mail_window_default_size
+		if mail_window.size != desired_size:
+			mail_window.custom_minimum_size = desired_size
+			mail_window.size = desired_size
+
+	if fail_sequence_started and fail_overlay and is_instance_valid(fail_overlay):
+		fail_overlay.visible = true
+
+	if fail_fade_active:
+		fail_fade_elapsed += delta
+		var t: float = clamp(fail_fade_elapsed / FAIL_FADE_DURATION, 0.0, 1.0)
+		var eased_t: float = smoothstep(0.0, 1.0, t)
+		if fail_overlay and is_instance_valid(fail_overlay):
+			fail_overlay.color = FAIL_OVERLAY_BASE_COLOR.lerp(FAIL_OVERLAY_FINAL_COLOR, eased_t)
+		if t >= 1.0:
+			fail_fade_active = false
+			if not fail_scene_change_triggered:
+				fail_scene_change_triggered = true
+				var tree: SceneTree = get_tree()
+				if tree:
+					var result: Error = tree.change_scene_to_file(FAIL_SCENE_PATH)
+					if result != OK:
+						push_error("Failed to change to fail scene: %s" % FAIL_SCENE_PATH)
+
+	shake_timer += delta
+	var target_shake: float = 0.0
+	if mission_started:
+		target_shake = lerp(0.22, 1.6, stress_intensity)
+	desktop_shake_amount = lerp(desktop_shake_amount, target_shake, clamp(delta * 2.4, 0.0, 1.0))
+	var base_frequency: float = lerp(0.6, 2.8, stress_intensity)
+	var secondary_freq: float = base_frequency * 0.6 + 0.25
+	var wobble: Vector2 = Vector2(
+		sin(shake_timer * base_frequency),
+		sin(shake_timer * secondary_freq + PI / 4.0)
+	)
+	var noise_offset: Vector2 = Vector2.ZERO
+	if desktop_shake_amount > 0.15:
+		noise_offset = Vector2(
+			randf_range(-0.45, 0.45),
+			randf_range(-0.45, 0.45)
+		) * desktop_shake_amount * 0.22
+	var base_offset: Vector2 = (wobble * desktop_shake_amount * 0.52) + noise_offset
+	_apply_shake_offsets(base_offset, desktop_shake_amount)
+
 
 # Helper function to check if a node is inside the desktop_container
 func _is_in_desktop_container(node: Node) -> bool:
@@ -899,7 +1081,7 @@ func _create_exit_button() -> void:
 	exit_button.z_index = RenderingServer.CANVAS_ITEM_Z_MAX
 	exit_button.top_level = true
 
-	var normal_style := StyleBoxFlat.new()
+	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
 	normal_style.bg_color = Color(0.16, 0.24, 0.32)
 	normal_style.border_color = Color(0.3, 0.55, 0.8)
 	normal_style.border_width_bottom = 2
@@ -912,11 +1094,11 @@ func _create_exit_button() -> void:
 	normal_style.corner_radius_top_right = 8
 	exit_button.add_theme_stylebox_override("normal", normal_style)
 
-	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	var hover_style: StyleBoxFlat = normal_style.duplicate() as StyleBoxFlat
 	hover_style.bg_color = Color(0.22, 0.34, 0.44)
 	exit_button.add_theme_stylebox_override("hover", hover_style)
 
-	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	var pressed_style: StyleBoxFlat = normal_style.duplicate() as StyleBoxFlat
 	pressed_style.bg_color = Color(0.12, 0.18, 0.26)
 	pressed_style.border_color = Color(0.45, 0.7, 0.95)
 	exit_button.add_theme_stylebox_override("pressed", pressed_style)
@@ -927,9 +1109,312 @@ func _create_exit_button() -> void:
 	add_child(exit_button)
 
 
+func _ensure_tick_player() -> void:
+	if ticker_player and is_instance_valid(ticker_player):
+		return
+
+	ticker_player = AudioStreamPlayer.new()
+	ticker_player.name = "MissionTickPlayer"
+	ticker_player.stream = _get_tick_stream()
+	ticker_player.volume_db = -8.0
+	ticker_player.bus = "Master"
+	ticker_player.autoplay = false
+	add_child(ticker_player)
+
+
+func _get_tick_stream() -> AudioStreamWAV:
+	if tick_stream:
+		return tick_stream
+
+	tick_stream = AudioStreamWAV.new()
+	tick_stream.format = AudioStreamWAV.FORMAT_16_BITS
+	tick_stream.stereo = false
+	tick_stream.mix_rate = 44100
+	tick_stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+
+	var duration: float = 0.08
+	var total_samples: int = int(duration * tick_stream.mix_rate)
+	var data: PackedByteArray = PackedByteArray()
+	data.resize(total_samples * 2)
+	var frequency_primary: float = 2100.0
+	var frequency_secondary: float = 3400.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / tick_stream.mix_rate
+		var envelope: float = pow(max(0.0, 1.0 - (t / duration)), 1.6)
+		var primary: float = sin(2.0 * PI * frequency_primary * t)
+		var secondary: float = sin(2.0 * PI * frequency_secondary * t)
+		var sample: float = (primary + 0.6 * secondary) * envelope
+		var value: int = int(clamp(sample, -1.0, 1.0) * 32767.0)
+		var lo: int = value & 0xFF
+		var hi: int = (value >> 8) & 0xFF
+		data[i * 2] = lo
+		data[i * 2 + 1] = hi
+
+	tick_stream.data = data
+	return tick_stream
+
+
+func _ensure_stress_overlay() -> void:
+	if stress_overlay and is_instance_valid(stress_overlay):
+		return
+
+	stress_overlay = ColorRect.new()
+	stress_overlay.name = "StressOverlay"
+	stress_overlay.color = Color(0.85, 0.1, 0.1, 0.0)
+	stress_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stress_overlay.anchor_left = 0.0
+	stress_overlay.anchor_top = 0.0
+	stress_overlay.anchor_right = 1.0
+	stress_overlay.anchor_bottom = 1.0
+	stress_overlay.offset_left = 0.0
+	stress_overlay.offset_top = 0.0
+	stress_overlay.offset_right = 0.0
+	stress_overlay.offset_bottom = 0.0
+	stress_overlay.z_index = RenderingServer.CANVAS_ITEM_Z_MAX - 2
+	stress_overlay.visible = false
+	add_child(stress_overlay)
+
+
+func _ensure_fail_overlay() -> void:
+	if fail_overlay and is_instance_valid(fail_overlay):
+		return
+
+	fail_overlay = ColorRect.new()
+	fail_overlay.name = "FailOverlay"
+	fail_overlay.color = Color(FAIL_OVERLAY_BASE_COLOR.r, FAIL_OVERLAY_BASE_COLOR.g, FAIL_OVERLAY_BASE_COLOR.b, 0.0)
+	fail_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fail_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fail_overlay.visible = false
+	fail_overlay.top_level = true
+	add_child(fail_overlay)
+	fail_overlay.z_index = RenderingServer.CANVAS_ITEM_Z_MAX - 1
+
+
+func _ensure_drone_player() -> void:
+	if stress_drone_player and is_instance_valid(stress_drone_player):
+		return
+
+	stress_drone_player = AudioStreamPlayer.new()
+	stress_drone_player.name = "StressDronePlayer"
+	stress_drone_player.stream = _get_drone_stream()
+	stress_drone_player.volume_db = -18.0
+	stress_drone_player.bus = "Master"
+	stress_drone_player.autoplay = false
+	add_child(stress_drone_player)
+
+
+func _ensure_success_relief_player() -> void:
+	if success_relief_player and is_instance_valid(success_relief_player):
+		return
+
+	success_relief_player = AudioStreamPlayer.new()
+	success_relief_player.name = "SuccessReliefPlayer"
+	success_relief_player.bus = "Master"
+	success_relief_player.autoplay = false
+	success_relief_player.volume_db = -4.0
+	success_relief_player.stream = _get_success_relief_stream()
+	add_child(success_relief_player)
+
+
+func _get_drone_stream() -> AudioStreamWAV:
+	if drone_stream:
+		return drone_stream
+
+	drone_stream = AudioStreamWAV.new()
+	drone_stream.format = AudioStreamWAV.FORMAT_16_BITS
+	drone_stream.stereo = false
+	drone_stream.mix_rate = 44100
+	drone_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+
+	var duration: float = 0.6
+	var total_samples: int = int(duration * drone_stream.mix_rate)
+	var data: PackedByteArray = PackedByteArray()
+	data.resize(total_samples * 2)
+	var frequency_low: float = 82.0
+	var frequency_high: float = 146.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / drone_stream.mix_rate
+		var slow_mod: float = 0.55 + 0.45 * sin(2.0 * PI * t / duration)
+		var low_wave: float = sin(2.0 * PI * frequency_low * t)
+		var high_wave: float = sin(2.0 * PI * frequency_high * t)
+		var sample: float = (0.65 * low_wave + 0.35 * high_wave) * slow_mod * 0.7
+		var value: int = int(clamp(sample, -1.0, 1.0) * 32767.0)
+		var lo: int = value & 0xFF
+		var hi: int = (value >> 8) & 0xFF
+		data[i * 2] = lo
+		data[i * 2 + 1] = hi
+
+	drone_stream.data = data
+	return drone_stream
+
+
+func _get_success_relief_stream() -> AudioStream:
+	if success_relief_stream:
+		return success_relief_stream
+
+	if ResourceLoader.exists(SUCCESS_RELIEF_AUDIO_PATH):
+		success_relief_stream = ResourceLoader.load(SUCCESS_RELIEF_AUDIO_PATH) as AudioStream
+		if not success_relief_stream:
+			push_warning("Failed to load success audio asset: %s" % SUCCESS_RELIEF_AUDIO_PATH)
+	else:
+		push_warning("Missing success audio asset: %s" % SUCCESS_RELIEF_AUDIO_PATH)
+
+	return success_relief_stream
+
+
+func _start_stress_drone() -> void:
+	_ensure_drone_player()
+	if stress_drone_player.stream == null:
+		stress_drone_player.stream = _get_drone_stream()
+	stress_drone_player.pitch_scale = 1.0
+	if not stress_drone_player.playing:
+		stress_drone_player.play()
+
+
+func _collect_shake_targets() -> Array[Control]:
+	var targets: Array[Control] = []
+	if desktop_container and is_instance_valid(desktop_container):
+		targets.append(desktop_container)
+	if mail_window and is_instance_valid(mail_window):
+		targets.append(mail_window)
+	if notes_window and is_instance_valid(notes_window):
+		targets.append(notes_window)
+	if mail_message_window and is_instance_valid(mail_message_window):
+		targets.append(mail_message_window)
+	if send_prompt_window and is_instance_valid(send_prompt_window):
+		targets.append(send_prompt_window)
+	for window_value in open_windows.values():
+		var panel := window_value as PanelContainer
+		if panel and is_instance_valid(panel):
+			targets.append(panel)
+	return targets
+
+
+func _apply_shake_offsets(base_offset: Vector2, amplitude: float) -> void:
+	var targets := _collect_shake_targets()
+	for target in targets:
+		var per_node_offset := _calculate_node_shake_offset(target, base_offset, amplitude)
+		_set_shake_offset(target, per_node_offset)
+
+
+func _calculate_node_shake_offset(target: Control, base_offset: Vector2, amplitude: float) -> Vector2:
+	if amplitude <= 0.01:
+		return Vector2.ZERO
+	var phase: float = target.get_meta("shake_phase", randf() * TAU)
+	target.set_meta("shake_phase", phase)
+	var variation_amount: float = amplitude * 0.24
+	var node_offset := Vector2(
+		sin(shake_timer * 1.25 + phase) * variation_amount,
+		sin(shake_timer * 1.7 + phase * 1.35 + PI / 5.0) * variation_amount
+	)
+	return base_offset + node_offset
+
+
+func _set_shake_offset(target: Control, offset: Vector2) -> void:
+	if not (target and is_instance_valid(target)):
+		return
+	var last_offset: Vector2 = target.get_meta("shake_last_offset", Vector2.ZERO)
+	target.position -= last_offset
+	target.position += offset
+	target.set_meta("shake_last_offset", offset)
+
+
+func _reset_shake_offsets() -> void:
+	for target in _collect_shake_targets():
+		_set_shake_offset(target, Vector2.ZERO)
+	desktop_shake_amount = 0.0
+
+func _play_tick() -> void:
+	if not mission_started:
+		return
+	_ensure_tick_player()
+	if ticker_player.stream == null:
+		ticker_player.stream = _get_tick_stream()
+	if ticker_player.playing:
+		ticker_player.stop()
+	ticker_player.play()
+
+
+func _play_success_relief_audio() -> void:
+	_ensure_success_relief_player()
+	if not (success_relief_player and is_instance_valid(success_relief_player)):
+		return
+	var stream := _get_success_relief_stream()
+	if stream:
+		success_relief_player.stream = stream
+		success_relief_player.stop()
+		success_relief_player.pitch_scale = 1.0
+		success_relief_player.play()
+	else:
+		push_warning("Success relief audio could not be played; missing stream.")
+
+
+func _stop_tick() -> void:
+	if ticker_player and is_instance_valid(ticker_player):
+		ticker_player.stop()
+		ticker_player.pitch_scale = 1.0
+		ticker_player.volume_db = -8.0
+	if stress_drone_player and is_instance_valid(stress_drone_player):
+		stress_drone_player.stop()
+		stress_drone_player.pitch_scale = 1.0
+		stress_drone_player.volume_db = -18.0
+	if stress_overlay and is_instance_valid(stress_overlay):
+		stress_overlay.visible = false
+		stress_overlay.color = Color(stress_overlay.color.r, stress_overlay.color.g, stress_overlay.color.b, 0.0)
+	stress_intensity = 0.0
+	_reset_shake_offsets()
+	shake_timer = 0.0
+
+
+func _update_stress_effects() -> void:
+	if not mission_started:
+		_stop_tick()
+		return
+
+	_ensure_stress_overlay()
+	stress_overlay.visible = true
+
+	var total_time := float(MISSION_DURATION_SECONDS)
+	if total_time <= 0.0:
+		total_time = 1.0
+	var progress := 1.0 - float(countdown_remaining) / total_time
+	stress_intensity = clamp(progress, 0.0, 1.0)
+	stress_intensity = max(stress_intensity, 0.25)
+	if countdown_remaining <= 60:
+		stress_intensity = max(stress_intensity, 0.55)
+	if countdown_remaining <= 20:
+		stress_intensity = max(stress_intensity, 0.75)
+	if countdown_remaining <= 10:
+		stress_intensity = 1.0
+
+	if ticker_player and is_instance_valid(ticker_player):
+		var pitch_target: float = 1.15 + stress_intensity * 0.65
+		if countdown_remaining <= 30:
+			pitch_target = 1.5 + stress_intensity * 0.7
+		if countdown_remaining <= 10:
+			pitch_target = 2.3
+		ticker_player.pitch_scale = clamp(pitch_target, 0.8, 3.0)
+		var volume_progress: float = clamp(1.0 - float(countdown_remaining) / 60.0, 0.0, 1.0)
+		var tick_volume: float = lerp(-12.0, 1.0, volume_progress)
+		if countdown_remaining <= 10:
+			tick_volume = max(tick_volume, 1.5)
+		ticker_player.volume_db = tick_volume
+
+	if stress_drone_player and is_instance_valid(stress_drone_player):
+		var drone_volume: float = lerp(-24.0, -4.0, stress_intensity)
+		if countdown_remaining <= 15:
+			drone_volume = lerp(drone_volume, -2.0, 0.6)
+		stress_drone_player.volume_db = drone_volume
+		var drone_pitch: float = lerp(1.0, 1.35, stress_intensity)
+		if countdown_remaining <= 10:
+			drone_pitch = 1.5
+		stress_drone_player.pitch_scale = drone_pitch
 func _on_exit_computer_pressed() -> void:
 	if mission_timer and not mission_timer.is_stopped():
 		mission_timer.stop()
+	_stop_tick()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if not ResourceLoader.exists(EXIT_SCENE_PATH):
 		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)
@@ -1002,6 +1487,10 @@ func _close_window(folder_name: String) -> void:
 		return
 	if folder_name == "Send File":
 		_close_send_prompt()
+		return
+	if folder_name == "Notes" and notes_window and is_instance_valid(notes_window):
+		notes_window.queue_free()
+		notes_window = null
 		return
 	# fallback: try to find a panel that has a header with this title and free it
 	for child in get_children():

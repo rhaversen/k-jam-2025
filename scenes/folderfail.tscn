@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://cpa41e22dsqqu"]
+
+[ext_resource type="Script" uid="uid://dvpu6wvle40bx" path="res://scripts/folder_fail.gd" id="1_xmy1j"]
+
+[node name="Folderfail" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_xmy1j")
+
+[node name="RedBackdrop" type="ColorRect" parent="."]
+color = Color(0.95, 0.0, 0.0, 1.0)
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="BossFootstepsIn" type="AudioStreamPlayer" parent="Audio"]
+bus = "Master"
+autoplay = false
+volume_db = -3.0
+
+[node name="BossScold" type="AudioStreamPlayer" parent="Audio"]
+bus = "Master"
+autoplay = false
+volume_db = -3.0
+
+[node name="BossFootstepsOut" type="AudioStreamPlayer" parent="Audio"]
+bus = "Master"
+autoplay = false
+volume_db = -3.0
