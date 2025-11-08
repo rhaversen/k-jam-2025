@@ -27,10 +27,13 @@ func setup(width: float, depth: float, height: float) -> void:
 
 func _ready() -> void:
 	_rebuild()
-	# Start with doors open
-	_doors_open = true
-	_door_open_amount = 1.0
+	# Start with doors closed
+	_doors_open = false
+	_door_open_amount = 0.0
 	call_deferred("_update_door_positions")
+	# Open doors after 1 second
+	await get_tree().create_timer(1.0).timeout
+	open_doors()
 
 func _rebuild() -> void:
 	_clear_children()
@@ -245,6 +248,14 @@ func open_doors() -> void:
 
 func close_doors() -> void:
 	_doors_open = false
+
+func close_doors_slowly() -> void:
+	close_doors()
+	await get_tree().create_timer(1.0 / door_open_speed).timeout
+
+func open_doors_slowly() -> void:
+	open_doors()
+	await get_tree().create_timer(1.0 / door_open_speed).timeout
 
 func move_to_floor(floor: int) -> void:
 	if floor < 0 or floor >= _floors.size():
