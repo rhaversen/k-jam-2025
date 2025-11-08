@@ -4,6 +4,7 @@ extends Area3D
 var player_inside := false
 @export var camera_node_path : NodePath = "../Player/Camera3D"  # Path from this node to the camera
 @export var camera_target_position : Vector3 = Vector3(0, 2.9, -1.8)  # World position
+@export var camera_target_rotation : Vector3 = Vector3(0, 0, 0)  # World position
 @export var camera_move_duration : float = 1.0
 
 @onready var camera : Camera3D = get_node(camera_node_path)
@@ -26,15 +27,19 @@ func _process(delta):
 
 		tween.tween_property(
 			camera,
+			"rotation_degrees",
+			camera_target_rotation,
+			camera_move_duration
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+		tween.tween_property(
+			camera,
 			"global_transform:origin",
 			camera_target_position,
 			camera_move_duration
-		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)   # easing direction
-
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		
 		tween.tween_callback(_on_tween_finished)
-		#tween.finished.connect(Callable(self, "_on_tween_finished").bind(tween))
-		# tween.finished.tween_callback(_on_tween_finished)
-		# tween.finished.bind(Callable(self, "_on_tween_finished"))
 
 func _on_tween_finished():
 	print("✅ switching sceens.")
