@@ -35,40 +35,27 @@ func _ready() -> void:
 	wall_mat.roughness = 0.8
 
 	# back wall
-	var back_wall := MeshInstance3D.new()
-	back_wall.mesh = BoxMesh.new()
-	back_wall.mesh.size = Vector3(4.0, 2.0, 0.1)
-	back_wall.material_override = wall_mat
-	back_wall.position = Vector3(0, 0, -2.5)
-	add_child(back_wall)
+	var back_wall := _create_static_mesh_body(self, Vector3(4.0, 2.0, 0.1), wall_mat, Vector3(0, 0, -2.5))
+	back_wall.name = "BackWall"
 
 	# left wall
-	var left_wall := MeshInstance3D.new()
-	left_wall.mesh = BoxMesh.new()
-	left_wall.mesh.size = Vector3(0.1, 2.0, 3.5)
-	left_wall.material_override = wall_mat
-	left_wall.position = Vector3(-2.0, 0, -1.0)
-	add_child(left_wall)
+	var left_wall := _create_static_mesh_body(self, Vector3(0.1, 2.0, 3.5), wall_mat, Vector3(-2.0, 0, -1.0))
+	left_wall.name = "LeftWall"
 
 	# right wall
-	var right_wall := left_wall.duplicate()
-	right_wall.position.x = 2.0
-	add_child(right_wall)
+	var right_wall := _create_static_mesh_body(self, Vector3(0.1, 2.0, 3.5), wall_mat, Vector3(2.0, 0, -1.0))
+	right_wall.name = "RightWall"
 
 	# ----- DESK -----
 	var desk := Node3D.new()
 	desk.name = "Desk"
 	add_child(desk)
 
-	var desk_top := MeshInstance3D.new()
-	desk_top.mesh = BoxMesh.new()
-	desk_top.mesh.size = Vector3(2.2, 0.1, 1.0)
 	var desk_mat := StandardMaterial3D.new()
 	desk_mat.albedo_color = Color(0.55, 0.45, 0.35) # wooden top
 	desk_mat.roughness = 0.6
-	desk_top.material_override = desk_mat
-	desk_top.position = Vector3(0, -0.5, -1.8)
-	desk.add_child(desk_top)
+	var desk_top := _create_static_mesh_body(desk, Vector3(2.2, 0.1, 1.0), desk_mat, Vector3(0, -0.5, -1.8))
+	desk_top.name = "DeskTop"
 
 	   # ----- MONITOR -----
 	var stand_mat := StandardMaterial3D.new()
@@ -372,3 +359,25 @@ func _add_posters() -> void:
 	#add_child(cam)
 
 	print("✅ Office cubicle generated successfully.")
+
+
+func _create_static_mesh_body(parent: Node3D, size: Vector3, material: StandardMaterial3D, position: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.position = position
+	parent.add_child(body)
+
+	var mesh_instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	if material:
+		mesh_instance.material_override = material
+	body.add_child(mesh_instance)
+
+	var collision_shape := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision_shape.shape = shape
+	body.add_child(collision_shape)
+
+	return body
