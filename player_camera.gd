@@ -38,4 +38,4 @@ func _process(delta):
 	_clamp_pitch()
 
 func _clamp_pitch() -> void:
-	rotation.x = clamp(rotation.x, deg_to_rad(-90), deg_to_rad(90))
+	rotation.x = clamp(rotation.x, deg_to_rad(-85), deg_to_rad(85))
