@@ -8,7 +8,7 @@ const FAIL_SCENE_PATH := "res://scenes/folderfail.tscn"
 const FAIL_FADE_DURATION := 1.25
 const FAIL_OVERLAY_BASE_COLOR := Color(0.95, 0.0, 0.0, 0.65)
 const FAIL_OVERLAY_FINAL_COLOR := Color(0.95, 0.0, 0.0, 1.0)
-const SUCCESS_RELIEF_AUDIO_PATH := "res://sound/success_breath.wav"
+const SUCCESS_HEART_AUDIO_PATH := "res://sound/fast_heart_beat_-_sound_effect.wav"
 
 var folder_tree: Dictionary
 var mail_window: PanelContainer
@@ -30,8 +30,8 @@ var stress_overlay: ColorRect
 var stress_intensity: float = 0.0
 var stress_drone_player: AudioStreamPlayer
 var drone_stream: AudioStreamWAV
-var success_relief_player: AudioStreamPlayer
-var success_relief_stream: AudioStream
+var success_heart_player: AudioStreamPlayer
+var success_heart_stream: AudioStream
 var desktop_shake_amount: float = 0.0
 var shake_timer: float = 0.0
 @onready var cursor: Sprite2D
@@ -73,7 +73,7 @@ func _ready() -> void:
 	_ensure_stress_overlay()
 	_ensure_fail_overlay()
 	_ensure_drone_player()
-	_ensure_success_relief_player()
+	_ensure_success_heart_player()
 	
 	# Create cursor last to ensure it's on top
 	_create_cursor()
@@ -545,8 +545,8 @@ func _start_mission_countdown() -> void:
 		add_child(mission_timer)
 
 	_reset_fail_state()
-	if success_relief_player and is_instance_valid(success_relief_player):
-		success_relief_player.stop()
+	if success_heart_player and is_instance_valid(success_heart_player):
+		success_heart_player.stop()
 	countdown_remaining = MISSION_DURATION_SECONDS
 	mission_started = true
 	mission_completed = false
@@ -589,7 +589,7 @@ func _complete_mission(success: bool) -> void:
 	_close_send_prompt()
 	if success:
 		mail_message_base_text = ""
-		_play_success_relief_audio()
+		_play_success_heart_audio()
 	else:
 		_handle_mission_failure()
 
@@ -1204,17 +1204,17 @@ func _ensure_drone_player() -> void:
 	add_child(stress_drone_player)
 
 
-func _ensure_success_relief_player() -> void:
-	if success_relief_player and is_instance_valid(success_relief_player):
+func _ensure_success_heart_player() -> void:
+	if success_heart_player and is_instance_valid(success_heart_player):
 		return
 
-	success_relief_player = AudioStreamPlayer.new()
-	success_relief_player.name = "SuccessReliefPlayer"
-	success_relief_player.bus = "Master"
-	success_relief_player.autoplay = false
-	success_relief_player.volume_db = -4.0
-	success_relief_player.stream = _get_success_relief_stream()
-	add_child(success_relief_player)
+	success_heart_player = AudioStreamPlayer.new()
+	success_heart_player.name = "SuccessHeartPlayer"
+	success_heart_player.bus = "Master"
+	success_heart_player.autoplay = false
+	success_heart_player.volume_db = -2.0
+	success_heart_player.stream = _get_success_heart_stream()
+	add_child(success_heart_player)
 
 
 func _get_drone_stream() -> AudioStreamWAV:
@@ -1250,18 +1250,18 @@ func _get_drone_stream() -> AudioStreamWAV:
 	return drone_stream
 
 
-func _get_success_relief_stream() -> AudioStream:
-	if success_relief_stream:
-		return success_relief_stream
+func _get_success_heart_stream() -> AudioStream:
+	if success_heart_stream:
+		return success_heart_stream
 
-	if ResourceLoader.exists(SUCCESS_RELIEF_AUDIO_PATH):
-		success_relief_stream = ResourceLoader.load(SUCCESS_RELIEF_AUDIO_PATH) as AudioStream
-		if not success_relief_stream:
-			push_warning("Failed to load success audio asset: %s" % SUCCESS_RELIEF_AUDIO_PATH)
+	if ResourceLoader.exists(SUCCESS_HEART_AUDIO_PATH):
+		success_heart_stream = ResourceLoader.load(SUCCESS_HEART_AUDIO_PATH) as AudioStream
+		if not success_heart_stream:
+			push_warning("Failed to load success audio asset: %s" % SUCCESS_HEART_AUDIO_PATH)
 	else:
-		push_warning("Missing success audio asset: %s" % SUCCESS_RELIEF_AUDIO_PATH)
+		push_warning("Missing success audio asset: %s" % SUCCESS_HEART_AUDIO_PATH)
 
-	return success_relief_stream
+	return success_heart_stream
 
 
 func _start_stress_drone() -> void:
@@ -1337,18 +1337,35 @@ func _play_tick() -> void:
 	ticker_player.play()
 
 
-func _play_success_relief_audio() -> void:
-	_ensure_success_relief_player()
-	if not (success_relief_player and is_instance_valid(success_relief_player)):
+
+func _play_success_heart_audio() -> void:
+	_ensure_success_heart_player()
+	if not (success_heart_player and is_instance_valid(success_heart_player)):
 		return
-	var stream := _get_success_relief_stream()
+	var stream := _get_success_heart_stream()
 	if stream:
-		success_relief_player.stream = stream
-		success_relief_player.stop()
-		success_relief_player.pitch_scale = 1.0
-		success_relief_player.play()
+		success_heart_player.stream = stream
+		success_heart_player.stop()
+		success_heart_player.pitch_scale = 1.0
+		success_heart_player.play()
 	else:
-		push_warning("Success relief audio could not be played; missing stream.")
+		push_warning("Success heartbeat audio could not be played; missing stream.")
+
+
+func _detach_success_heart_player_for_scene_transition() -> void:
+	if not (success_heart_player and is_instance_valid(success_heart_player)):
+		return
+	if not success_heart_player.playing:
+		return
+	var root := get_tree().get_root()
+	if not root:
+		return
+	if success_heart_player.get_parent() != root:
+		success_heart_player.reparent(root)
+	success_heart_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	var cleanup_callable := Callable(success_heart_player, "queue_free")
+	if not success_heart_player.finished.is_connected(cleanup_callable):
+		success_heart_player.finished.connect(cleanup_callable, Object.CONNECT_ONE_SHOT)
 
 
 func _stop_tick() -> void:
@@ -1415,6 +1432,8 @@ func _on_exit_computer_pressed() -> void:
 	if mission_timer and not mission_timer.is_stopped():
 		mission_timer.stop()
 	_stop_tick()
+	if success_heart_player and is_instance_valid(success_heart_player) and success_heart_player.playing:
+		_detach_success_heart_player_for_scene_transition()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if not ResourceLoader.exists(EXIT_SCENE_PATH):
 		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)

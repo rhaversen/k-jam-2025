@@ -95,40 +95,6 @@ script = ExtResource("2_cdqbm")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Map/Ground"]
 shape = SubResource("BoxShape3D_noarx")
 
-[node name="StaticBody3D3" type="StaticBody3D" parent="Map"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 8.354, 0)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D3"]
-mesh = SubResource("BoxMesh_r3fl7")
-skeleton = NodePath("../../StaticBody3D3")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D3"]
-shape = SubResource("BoxShape3D_jka67")
-
-[node name="StaticBody3D2" type="StaticBody3D" parent="Map"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 8, 0)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D2"]
-mesh = SubResource("BoxMesh_r3fl7")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D2"]
-shape = SubResource("BoxShape3D_jka67")
-
-[node name="StaticBody3D5" type="StaticBody3D" parent="Map"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 30)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D5"]
-shape = SubResource("BoxShape3D_i5arm")
-
-[node name="StaticBody3D4" type="StaticBody3D" parent="Map"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, -29)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D4"]
-mesh = SubResource("BoxMesh_jka67")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D4"]
-shape = SubResource("BoxShape3D_i5arm")
-
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Map"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1025121, 0)
 script = ExtResource("1_wc5p8")
