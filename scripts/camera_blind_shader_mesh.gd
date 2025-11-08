@@ -10,7 +10,3 @@ func _process(delta: float) -> void:
 	var mat = material_override
 	if mat is ShaderMaterial:
 		mat.set_shader_parameter("blind", 0.5 if get_node("../Player").is_stressed_1()["blind"] else 0.0)
-		
-	#var mat = get_surface_override_material(0)
-	#mat.set_shader_parameter("stress_level_1", get_node("../Player").is_stressed_1())
-	#mat.set_shader_parameter("blind", get_node("../Player").blind)

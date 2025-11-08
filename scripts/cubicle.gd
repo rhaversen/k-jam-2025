@@ -45,7 +45,7 @@ func _rebuild() -> void:
 	right_wall.name = "RightWall"
 
 	var front_wall_size := Vector3(HALF_WIDTH * 0.5, WALL_HEIGHT, wall_thickness)
-	var front_wall_offset_x := -HALF_WIDTH
+	var front_wall_offset_x := -HALF_WIDTH + (front_wall_size.x * 0.5)
 	var front_wall := _create_static_mesh_body(self, front_wall_size, wall_mat, Vector3(front_wall_offset_x, 0, wall_thickness * 0.5))
 	front_wall.name = "FrontWall"
 	_add_front_wall_id(front_wall, employee_id, front_wall_size)
@@ -271,7 +271,19 @@ func _rebuild() -> void:
 			desk.add_child(key)
 
 	_add_posters(self, interior_depth)
+	_center_layout()
 	_built = true
+
+func _center_layout() -> void:
+	var bounds := get_collision_bounds()
+	var center_x := (float(bounds.get("min_x", 0.0)) + float(bounds.get("max_x", 0.0))) * 0.5
+	var center_z := (float(bounds.get("min_z", 0.0)) + float(bounds.get("max_z", 0.0))) * 0.5
+	if abs(center_x) < 0.0001 and abs(center_z) < 0.0001:
+		return
+	var offset := Vector3(center_x, 0.0, center_z)
+	for child in get_children():
+		if child is Node3D:
+			child.position -= offset
 
 func get_collision_bounds() -> Dictionary:
 	var bounds := {

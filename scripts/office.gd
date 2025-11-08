@@ -5,9 +5,11 @@ const DropCeiling := preload("res://scripts/drop_ceiling.gd")
 const Cubicle := preload("res://scripts/cubicle.gd")
 const Elevator := preload("res://scripts/elevator.gd")
 
-@export var cubicle_count: int = 20
-@export var aisle_width: float = 6.0
+@export var grid_rows: int = 2
+@export var grid_columns: int = 10
+@export var cubicle_width: float = 4.0
 @export var cubicle_depth: float = 3.0
+@export var aisle_width: float = 6.0
 @export var wall_thickness: float = 0.06
 
 var _is_ready := false
@@ -16,101 +18,139 @@ func _ready() -> void:
 	_is_ready = true
 	_rebuild_office()
 
-func set_cubicle_count(value: int) -> void:
-	var sanitized: int = int(max(value, 0))
-	if cubicle_count == sanitized:
-		return
-	cubicle_count = sanitized
-	if _is_ready:
-		_rebuild_office()
-
 func _rebuild_office() -> void:
 	_clear_office()
 	_build_environment()
 
-	if cubicle_count <= 0:
+	if grid_rows <= 0 or grid_columns <= 0:
 		var fallback_length := 12.0
 		var fallback_depth := 6.0
 		var fallback_center := 0.0
-		_create_floor(fallback_length, fallback_depth, fallback_center)
 		_create_drop_ceiling(fallback_length, fallback_depth, fallback_center)
 		return
 
-	var aisle_half: float = max(0.0, aisle_width * 0.5)
+	# Calculate grid layout
+	# Each "unit" is 2x2 cubicles: two facing forward, two facing backward
+	var total_units := grid_rows * grid_columns
+	var total_cubicles := total_units * 4
+	var cubicle_id := 1
+	
+	# Create units in a grid
+	var units: Array[Array] = []  # Array of rows, each containing units
+	for row_idx in range(grid_rows):
+		var row_units: Array[Array] = []  # Array of units in this row
+		
+		for col_idx in range(grid_columns):
+			var unit_cubicles: Array[Node3D] = []
+			
+			# Create 2x2 cubicle arrangement:
+			# [0: left-faces-left] [1: right-faces-right]
+			# [2: left-faces-left] [3: right-faces-right]
+			
+			# Front-left cubicle (faces left/outward)
+			var c0 := Cubicle.new()
+			c0.name = "Cubicle_R%d_C%d_FL" % [row_idx, col_idx]
+			c0.setup(cubicle_id, cubicle_depth, wall_thickness)
+			c0.rotate_y(-PI / 2)  # Face left
+			add_child(c0)
+			unit_cubicles.append(c0)
+			cubicle_id += 1
+			
+			# Front-right cubicle (faces right/outward)
+			var c1 := Cubicle.new()
+			c1.name = "Cubicle_R%d_C%d_FR" % [row_idx, col_idx]
+			c1.setup(cubicle_id, cubicle_depth, wall_thickness)
+			c1.rotate_y(PI / 2)  # Face right
+			add_child(c1)
+			unit_cubicles.append(c1)
+			cubicle_id += 1
+			
+			# Back-left cubicle (faces left/outward)
+			var c2 := Cubicle.new()
+			c2.name = "Cubicle_R%d_C%d_BL" % [row_idx, col_idx]
+			c2.setup(cubicle_id, cubicle_depth, wall_thickness)
+			c2.rotate_y(-PI / 2)  # Face left
+			add_child(c2)
+			unit_cubicles.append(c2)
+			cubicle_id += 1
+			
+			# Back-right cubicle (faces right/outward)
+			var c3 := Cubicle.new()
+			c3.name = "Cubicle_R%d_C%d_BR" % [row_idx, col_idx]
+			c3.setup(cubicle_id, cubicle_depth, wall_thickness)
+			c3.rotate_y(PI / 2)  # Face right
+			add_child(c3)
+			unit_cubicles.append(c3)
+			cubicle_id += 1
+			
+			row_units.append(unit_cubicles)
+		
+		units.append(row_units)
+	
+	# Position cubicle units in grid
+	if units.size() == 0 or units[0].size() == 0:
+		return
+	
+	var sample_cubicle: Node3D = units[0][0][0]
+	var sample_bounds: Dictionary = sample_cubicle.get_collision_bounds()
+	var sample_min_x: float = float(sample_bounds.get("min_x", 0.0))
+	var sample_max_x: float = float(sample_bounds.get("max_x", 0.0))
+	var sample_min_z: float = float(sample_bounds.get("min_z", 0.0))
+	var sample_max_z: float = float(sample_bounds.get("max_z", 0.0))
+	var cubicle_half_depth: float = (sample_max_x - sample_min_x) * 0.5
+	var cubicle_half_width: float = (sample_max_z - sample_min_z) * 0.5
+	if cubicle_half_depth <= 0.0 or cubicle_half_width <= 0.0:
+		return
 
-	var row_a: Array[Node3D] = []
-	var row_a_bounds: Dictionary = {}
-	var spacing: float = 0.0
-	for i in range(cubicle_count):
-		var cubicle := Cubicle.new()
-		cubicle.name = "Cubicle_%02d" % i
-		cubicle.setup(i + 1, cubicle_depth, wall_thickness)
-		if i == 0:
-			row_a_bounds = cubicle.get_collision_bounds()
-			spacing = float(row_a_bounds.get("width", 0.0))
-			if spacing <= 0.0:
-				spacing = 4.0
-		add_child(cubicle)
-		row_a.append(cubicle)
+	# Calculate unit dimensions (2 cubicles wide, 2 cubicles deep)
+	var unit_width: float = cubicle_half_depth * 2.0
+	var unit_depth: float = cubicle_half_width * 2.0
+	
+	# Calculate grid dimensions with aisle spacing between units
+	var total_unit_width: float = unit_width + aisle_width
+	var total_unit_depth: float = unit_depth + aisle_width
+	var grid_width: float = total_unit_width * float(grid_columns) - aisle_width  # No aisle after last column
+	var grid_depth: float = total_unit_depth * float(grid_rows) - aisle_width  # No aisle after last row
+	var grid_start_x: float = -grid_width * 0.5
+	var grid_start_z: float = -grid_depth * 0.5
+	
+	# Position each unit
+	for row_idx in range(grid_rows):
+		for col_idx in range(grid_columns):
+			var unit: Array[Node3D] = units[row_idx][col_idx]
+			
+			# Calculate unit center position (with aisle spacing between units)
+			var unit_center_x: float = grid_start_x + col_idx * total_unit_width + unit_width * 0.5
+			var unit_center_z: float = grid_start_z + row_idx * total_unit_depth + unit_depth * 0.5
+			
+			# Position the 4 cubicles in this unit so backs and sides touch cleanly
+			var front_z := unit_center_z - cubicle_half_width
+			var back_z := unit_center_z + cubicle_half_width
+			var left_x := unit_center_x - cubicle_half_depth
+			var right_x := unit_center_x + cubicle_half_depth
 
-	var row_b: Array[Node3D] = []
-	var row_b_bounds: Dictionary = {}
-	for i in range(cubicle_count):
-		var cubicle := Cubicle.new()
-		cubicle.name = "CubicleB_%02d" % i
-		cubicle.setup(cubicle_count + i + 1, cubicle_depth, wall_thickness)
-		cubicle.rotate_y(PI)
-		if i == 0:
-			row_b_bounds = cubicle.get_collision_bounds()
-		add_child(cubicle)
-		row_b.append(cubicle)
+			_place_cubicle(unit[0], Vector3(left_x, 0.0, front_z))
+			_place_cubicle(unit[1], Vector3(right_x, 0.0, front_z))
+			_place_cubicle(unit[2], Vector3(left_x, 0.0, back_z))
+			_place_cubicle(unit[3], Vector3(right_x, 0.0, back_z))
+	
+	# Calculate bounds for ceiling
+	var first_center_z: float = grid_start_z + unit_depth * 0.5
+	var last_center_z: float = grid_start_z + (grid_rows - 1) * total_unit_depth + unit_depth * 0.5
+	var min_z: float = first_center_z - cubicle_half_width
+	var max_z: float = last_center_z + cubicle_half_width
 
-	if row_b_bounds.get("width", 0.0) <= 0.0:
-		row_b_bounds = {
-			"min_x": row_a_bounds.get("min_x", 0.0),
-			"max_x": row_a_bounds.get("max_x", 0.0),
-			"min_z": -row_a_bounds.get("max_z", 0.0),
-			"max_z": -row_a_bounds.get("min_z", 0.0),
-			"width": spacing,
-			"depth": row_a_bounds.get("depth", cubicle_depth)
-		}
-
-	var half_span: float = spacing * 0.5 * float(max(cubicle_count - 1, 0))
-	var center_offset := 0.0
-	if cubicle_count % 2 == 0 and spacing > 0.0:
-		center_offset = spacing * 0.5
-
-	var row_a_front := float(row_a_bounds.get("max_z", 0.0))
-	var row_a_back := float(row_a_bounds.get("min_z", 0.0))
-	var row_b_front := float(row_b_bounds.get("max_z", 0.0))
-	var row_b_back := float(row_b_bounds.get("min_z", 0.0))
-
-	var row_a_z_offset: float = -aisle_half - row_a_front
-	var row_b_z_offset: float = aisle_half - row_b_front
-
-	for i in range(row_a.size()):
-		var target_a := Vector3(-half_span + i * spacing + center_offset, 0, row_a_z_offset)
-		row_a[i].position = target_a
-
-	for i in range(row_b.size()):
-		var target_b := Vector3(-half_span + i * spacing + center_offset, 0, row_b_z_offset)
-		row_b[i].position = target_b
-
-	var min_z: float = min(row_a_back + row_a_z_offset, row_b_back + row_b_z_offset)
-	var max_z: float = max(row_a_front + row_a_z_offset, row_b_front + row_b_z_offset)
-	# Extend floor to cover entire office area with extra margin to reach all walls
-	# Calculate the extent needed to reach the aisle wall position
-	var wall_x := -half_span + spacing + center_offset + spacing  # End of aisle wall
-	var floor_length: float = max(12.0, abs(wall_x - (-half_span)) + abs(wall_x - half_span) + 12.0)
+	var floor_length: float = grid_width + 12.0
 	var floor_depth: float = max(6.0, (max_z - min_z) + 12.0)
 	var floor_center: float = (min_z + max_z) * 0.5
-	_create_floor(floor_length, floor_depth, floor_center)
+	
 	_create_drop_ceiling(floor_length, floor_depth, floor_center)
 	
-	# Create aisle wall aligned with two cubicles
-	_create_aisle_wall(spacing, center_offset, half_span)
+	# Create aisle wall with elevator (if grid is large enough)
+	if grid_columns > 4:
+		_create_aisle_wall(grid_start_x, total_unit_width, unit_width, unit_depth)
 
-	print("✅ Generated %d cubicle pairs at spacing %.2f with aisle %.2f." % [cubicle_count, spacing, aisle_width])
+	print("✅ Generated %dx%d unit grid (%d units, %d cubicles total)." % [grid_rows, grid_columns, total_units, total_cubicles])
 
 
 # ------------------------------------------------------------
@@ -135,20 +175,6 @@ func _build_environment() -> void:
 	env.environment = environment
 	add_child(env)
 
-func _create_floor(total_length: float, total_depth: float, center_z: float) -> void:
-	var floor_mesh_instance := MeshInstance3D.new()
-	floor_mesh_instance.name = "Floor"
-	var floor_mesh := PlaneMesh.new()
-	floor_mesh.size = Vector2(total_length, total_depth)
-	floor_mesh_instance.mesh = floor_mesh
-	var floor_mat := StandardMaterial3D.new()
-	floor_mat.albedo_color = Color(0.18, 0.20, 0.22)
-	floor_mat.roughness = 0.95
-	floor_mat.metallic = 0.0
-	floor_mesh_instance.material_override = floor_mat
-	floor_mesh_instance.position = Vector3(0, -1.0, center_z)
-	add_child(floor_mesh_instance)
-
 func _create_drop_ceiling(total_length: float, total_depth: float, center_z: float) -> void:
 	if DropCeiling == null:
 		return
@@ -156,19 +182,19 @@ func _create_drop_ceiling(total_length: float, total_depth: float, center_z: flo
 	add_child(ceiling)
 	ceiling.setup(total_length, total_depth, center_z)
 
-func _create_aisle_wall(spacing: float, center_offset: float, half_span: float) -> void:
-	# Create a wall down the aisle that spans two cubicles
+func _create_aisle_wall(grid_start_x: float, total_unit_width: float, unit_width: float, unit_depth: float) -> void:
+	# Create a wall down the aisle
 	var wall_height := 2.5
 	var wall_thickness := 0.15
-	var wall_length := spacing * 2.0  # Spans two cubicles
+	var wall_length := unit_depth  # Spans two cubicles
 	
 	var wall_mat := StandardMaterial3D.new()
 	wall_mat.albedo_color = Color(0.75, 0.75, 0.8)
 	wall_mat.roughness = 0.85
 	
-	# Position the wall between cubicles (at 4.5 cubicle position)
-	# Wall now runs perpendicular to cubicles (along Z-axis)
-	var wall_x := -half_span + spacing * 4.5 + center_offset  # Start at 4.5 cubicle position
+	# Position the wall at a reasonable spot (near middle of grid)
+	var wall_column_index: float = min(float(grid_columns) - 1.0, 4.0)
+	var wall_x: float = grid_start_x + total_unit_width * wall_column_index + unit_width * 0.5
 	
 	# Create wall with hole for elevator (aligned with elevator door position)
 	var elevator_z_position := -1.5  # This matches the elevator position
@@ -223,10 +249,16 @@ func _create_aisle_wall(spacing: float, center_offset: float, half_span: float) 
 		right_collision.shape = right_shape
 		right_wall.add_child(right_collision)
 	
-	# Add elevator to the aisle wall (moved back half a cubicle)
-	_create_elevator_on_wall(wall_x, spacing)
+	# Add elevator to the aisle wall
+	_create_elevator_on_wall(wall_x, unit_width)
 
-func _create_elevator_on_wall(wall_x: float, spacing: float) -> void:
+func _place_cubicle(cubicle: Node3D, target_center: Vector3) -> void:
+	var bounds: Dictionary = cubicle.get_collision_bounds()
+	var center_x: float = (float(bounds.get("min_x", 0.0)) + float(bounds.get("max_x", 0.0))) * 0.5
+	var center_z: float = (float(bounds.get("min_z", 0.0)) + float(bounds.get("max_z", 0.0))) * 0.5
+	cubicle.position = Vector3(target_center.x - center_x, 0.0, target_center.z - center_z)
+
+func _create_elevator_on_wall(wall_x: float, unit_width: float) -> void:
 	if Elevator == null:
 		return
 	
@@ -240,10 +272,9 @@ func _create_elevator_on_wall(wall_x: float, spacing: float) -> void:
 	
 	# Position elevator attached to the wall
 	# Offset by half the elevator depth so it's flush against the wall
-	# Align elevator opening with the beginning of the wall
 	var elevator_offset := elevator.elevator_depth * 0.5
-	var elevator_x := wall_x + elevator_offset - (spacing * 0.5) + (elevator.elevator_width * 0.5) - 0.5  # Move back a bit
-	var elevator_z := -1.5  # Move to the left
+	var elevator_x := wall_x + elevator_offset - unit_width * 0.5 + elevator.elevator_width * 0.5 - 0.5
+	var elevator_z := -1.5
 	elevator.position = Vector3(elevator_x, -1.0, elevator_z)  # Y = -1.0 to match floor level
 	elevator.rotation_degrees = Vector3(0, 90, 0)  # Rotate so doors face positive X (into the aisle)
 	

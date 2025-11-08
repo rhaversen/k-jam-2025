@@ -84,16 +84,6 @@ func _build_elevator_car() -> void:
 	car_mat.metallic = 0.3
 	car_mat.roughness = 0.4
 	
-	# Elevator floor (visual only - no collision so players can walk in freely)
-	var floor_mesh := MeshInstance3D.new()
-	floor_mesh.name = "Floor"
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(elevator_width, 0.1, elevator_depth)
-	floor_mesh.mesh = mesh
-	floor_mesh.material_override = car_mat
-	floor_mesh.position = Vector3(0, -0.05, 0)
-	_elevator_car.add_child(floor_mesh)
-	
 	# Elevator ceiling
 	var ceiling := MeshInstance3D.new()
 	ceiling.name = "Ceiling"
