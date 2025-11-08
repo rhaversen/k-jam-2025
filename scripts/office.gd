@@ -369,11 +369,11 @@ func _position_player_in_elevator(elevator: Node3D) -> void:
 	spawn_point.y = global_transform.origin.y + height_offset
 	player.global_position = spawn_point
 
-	var left_dir := -elevator.global_transform.basis.x
-	left_dir.y = 0.0
-	if left_dir.length_squared() > 0.0001:
-		left_dir = left_dir.normalized()
-		player.look_at(spawn_point + left_dir, Vector3.UP)
+	var forward_dir := elevator.global_transform.basis.z
+	forward_dir.y = 0.0
+	if forward_dir.length_squared() > 0.0001:
+		forward_dir = forward_dir.normalized()
+		player.look_at(spawn_point + forward_dir, Vector3.UP)
 
 	if player is CharacterBody3D:
 		var body := player as CharacterBody3D
