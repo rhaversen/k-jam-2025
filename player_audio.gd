@@ -26,10 +26,3 @@ func _process(delta: float) -> void:
 		play()
 	else:
 		delay = 2
-	# if playing:
-	# 	return
-	# play()
-	#wait_time += delta
-	#if wait_time > 5:
-		#play()
-		#wait_time = 0

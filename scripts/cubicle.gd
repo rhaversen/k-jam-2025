@@ -6,7 +6,7 @@ extends Node3D
 @export var employee_id: int = 1
 
 const WALL_HEIGHT := 2.0
-const HALF_WIDTH := 2.0
+const HALF_WIDTH := 1.5
 
 var _built := false
 
@@ -37,44 +37,33 @@ func _rebuild() -> void:
 	var back_wall := _create_static_mesh_body(self, back_wall_size, wall_mat, Vector3(0, 0, back_center_z))
 	back_wall.name = "BackWall"
 
-	var side_wall_size := Vector3(wall_thickness, WALL_HEIGHT, side_length)
-	var left_wall := _create_static_mesh_body(self, side_wall_size, wall_mat, Vector3(-HALF_WIDTH, 0, side_center_z))
+	var side_wall_height := WALL_HEIGHT * 0.5
+	var side_wall_y_offset := -side_wall_height * 0.5
+	var side_wall_size := Vector3(wall_thickness, side_wall_height, side_length)
+	var left_wall := _create_static_mesh_body(self, side_wall_size, wall_mat, Vector3(-HALF_WIDTH, side_wall_y_offset, side_center_z))
 	left_wall.name = "LeftWall"
 
-	var right_wall := _create_static_mesh_body(self, side_wall_size, wall_mat, Vector3(HALF_WIDTH, 0, side_center_z))
+	var right_wall := _create_static_mesh_body(self, side_wall_size, wall_mat, Vector3(HALF_WIDTH, side_wall_y_offset, side_center_z))
 	right_wall.name = "RightWall"
 
-	var front_wall_size := Vector3(HALF_WIDTH * 0.5, WALL_HEIGHT, wall_thickness)
+	var front_wall_size := Vector3(HALF_WIDTH * 0.5, side_wall_height, wall_thickness)
 	var front_wall_offset_x := -HALF_WIDTH + (front_wall_size.x * 0.5)
-	var front_wall := _create_static_mesh_body(self, front_wall_size, wall_mat, Vector3(front_wall_offset_x, 0, wall_thickness * 0.5))
+	var front_wall := _create_static_mesh_body(self, front_wall_size, wall_mat, Vector3(front_wall_offset_x, side_wall_y_offset, wall_thickness * 0.5))
 	front_wall.name = "FrontWall"
 	_add_front_wall_id(front_wall, employee_id, front_wall_size)
 
 	var desk := Node3D.new()
 	desk.name = "Desk"
-	var desk_depth := 1.0
-	var desk_front_margin := 0.2
-	var desk_back_margin := 0.2
-	var min_center: float = -interior_depth + (desk_depth * 0.5) + desk_back_margin
-	var max_center: float = front_edge_z - desk_front_margin - (desk_depth * 0.5)
-	if min_center > max_center:
-		var mid: float = (min_center + max_center) * 0.5
-		min_center = mid
-		max_center = mid
-	var initial_center: float = -interior_depth + 1.0
-	var desk_center_z: float = clampf(initial_center, min_center, max_center)
-	var back_limit: float = -interior_depth + (desk_depth * 0.5)
-	var front_limit: float = front_edge_z - (desk_depth * 0.5)
-	var limit_min: float = float(min(back_limit, front_limit))
-	var limit_max: float = float(max(back_limit, front_limit))
-	desk_center_z = clampf(desk_center_z, limit_min, limit_max)
-	desk.position = Vector3(0, 0, desk_center_z)
+	var desk_depth := 0.7
+	var desk_back_margin := 0.0
+	var desk_center_z: float = -interior_depth + 0.45
+	desk.position = Vector3(0, 0.2, desk_center_z)
 	add_child(desk)
 
 	var desk_mat := StandardMaterial3D.new()
 	desk_mat.albedo_color = Color(0.55, 0.45, 0.35)
 	desk_mat.roughness = 0.6
-	var desk_top := _create_static_mesh_body(desk, Vector3(2.2, 0.1, desk_depth), desk_mat, Vector3(0, -0.5, 0))
+	var desk_top := _create_static_mesh_body(desk, Vector3(1.8, 0.08, desk_depth), desk_mat, Vector3(0, -0.5, 0))
 	desk_top.name = "DeskTop"
 
 	var stand_mat := StandardMaterial3D.new()
@@ -83,35 +72,35 @@ func _rebuild() -> void:
 
 	var base_disc := MeshInstance3D.new()
 	var base_mesh := CylinderMesh.new()
-	base_mesh.top_radius = 0.25
-	base_mesh.bottom_radius = 0.25
-	base_mesh.height = 0.03
+	base_mesh.top_radius = 0.18
+	base_mesh.bottom_radius = 0.18
+	base_mesh.height = 0.02
 	base_disc.mesh = base_mesh
 	base_disc.material_override = stand_mat
-	base_disc.position = Vector3(0, -0.44, -0.25)
+	base_disc.position = Vector3(0, -0.44, -0.2)
 	desk.add_child(base_disc)
 
 	var neck := MeshInstance3D.new()
 	neck.mesh = BoxMesh.new()
-	neck.mesh.size = Vector3(0.08, 0.28, 0.08)
+	neck.mesh.size = Vector3(0.06, 0.22, 0.06)
 	neck.material_override = stand_mat
-	neck.position = Vector3(0, -0.29, -0.25)
+	neck.position = Vector3(0, -0.32, -0.2)
 	desk.add_child(neck)
 
 	var monitor_body := MeshInstance3D.new()
 	monitor_body.mesh = BoxMesh.new()
-	monitor_body.mesh.size = Vector3(1.0, 0.6, 0.05)
+	monitor_body.mesh.size = Vector3(0.7, 0.45, 0.04)
 	var body_mat := StandardMaterial3D.new()
 	body_mat.albedo_color = Color(0.05, 0.05, 0.05)
 	body_mat.roughness = 0.9
 	monitor_body.material_override = body_mat
-	monitor_body.position = Vector3(0, -0.02, -0.2)
+	monitor_body.position = Vector3(0, -0.08, -0.15)
 	monitor_body.rotation_degrees = Vector3(0, 180, 0)
 	desk.add_child(monitor_body)
 
 	var screen := MeshInstance3D.new()
 	screen.mesh = BoxMesh.new()
-	screen.mesh.size = Vector3(0.9, 0.5, 0.01)
+	screen.mesh.size = Vector3(0.6, 0.35, 0.01)
 	var screen_mat := StandardMaterial3D.new()
 	screen_mat.albedo_color = Color(0.05, 0.1, 0.08)
 	screen_mat.emission_enabled = true
@@ -144,7 +133,7 @@ func _rebuild() -> void:
 
 	var mouse := MeshInstance3D.new()
 	var mouse_mesh := BoxMesh.new()
-	mouse_mesh.size = Vector3(0.1, 0.04, 0.15)
+	mouse_mesh.size = Vector3(0.07, 0.03, 0.1)
 	mouse.mesh = mouse_mesh
 
 	var mouse_mat := StandardMaterial3D.new()
@@ -153,12 +142,12 @@ func _rebuild() -> void:
 	mouse_mat.metallic = 0.05
 	mouse.material_override = mouse_mat
 
-	mouse.position = Vector3(0.45, -0.40, 0.25)
+	mouse.position = Vector3(0.35, -0.42, 0.2)
 	desk.add_child(mouse)
 
 	var mouse_line := MeshInstance3D.new()
 	var line_mesh := BoxMesh.new()
-	line_mesh.size = Vector3(0.01, 0.002, 0.09)
+	line_mesh.size = Vector3(0.008, 0.002, 0.06)
 	mouse_line.mesh = line_mesh
 
 	var line_mat := StandardMaterial3D.new()
@@ -166,14 +155,14 @@ func _rebuild() -> void:
 	line_mat.roughness = 0.7
 	mouse_line.material_override = line_mat
 
-	mouse_line.position = Vector3(0, 0.022, -0.04)
+	mouse_line.position = Vector3(0, 0.018, -0.03)
 	mouse.add_child(mouse_line)
 
 	var mug := MeshInstance3D.new()
 	var mug_mesh := CylinderMesh.new()
-	mug_mesh.top_radius = 0.1
-	mug_mesh.bottom_radius = 0.1
-	mug_mesh.height = 0.25
+	mug_mesh.top_radius = 0.07
+	mug_mesh.bottom_radius = 0.07
+	mug_mesh.height = 0.18
 	mug.mesh = mug_mesh
 
 	var mug_mat := StandardMaterial3D.new()
@@ -181,48 +170,48 @@ func _rebuild() -> void:
 	mug_mat.roughness = 0.3
 	mug.material_override = mug_mat
 
-	mug.position = Vector3(0.8, -0.42, 0.25)
+	mug.position = Vector3(0.6, -0.43, 0.2)
 	desk.add_child(mug)
 
 	var handle_mat := mug_mat
 
 	var handle_top := MeshInstance3D.new()
 	var mesh_top := CylinderMesh.new()
-	mesh_top.top_radius = 0.02
-	mesh_top.bottom_radius = 0.02
-	mesh_top.height = 0.06
+	mesh_top.top_radius = 0.015
+	mesh_top.bottom_radius = 0.015
+	mesh_top.height = 0.04
 	handle_top.mesh = mesh_top
 	handle_top.material_override = handle_mat
 	handle_top.rotation_degrees = Vector3(0, 0, 90)
-	handle_top.position = Vector3(0.12, 0.1, 0.0)
+	handle_top.position = Vector3(0.09, 0.07, 0.0)
 	mug.add_child(handle_top)
 
 	var handle_mid := MeshInstance3D.new()
 	var mesh_mid := CylinderMesh.new()
-	mesh_mid.top_radius = 0.02
-	mesh_mid.bottom_radius = 0.02
-	mesh_mid.height = 0.08
+	mesh_mid.top_radius = 0.015
+	mesh_mid.bottom_radius = 0.015
+	mesh_mid.height = 0.06
 	handle_mid.mesh = mesh_mid
 	handle_mid.material_override = handle_mat
 	handle_mid.rotation_degrees = Vector3(0, 0, 0)
-	handle_mid.position = Vector3(0.14, 0.07, 0.0)
+	handle_mid.position = Vector3(0.105, 0.05, 0.0)
 	mug.add_child(handle_mid)
 
 	var handle_bottom := MeshInstance3D.new()
 	var mesh_bottom := CylinderMesh.new()
-	mesh_bottom.top_radius = 0.02
-	mesh_bottom.bottom_radius = 0.02
-	mesh_bottom.height = 0.06
+	mesh_bottom.top_radius = 0.015
+	mesh_bottom.bottom_radius = 0.015
+	mesh_bottom.height = 0.04
 	handle_bottom.mesh = mesh_bottom
 	handle_bottom.material_override = handle_mat
 	handle_bottom.rotation_degrees = Vector3(0, 0, 90)
-	handle_bottom.position = Vector3(0.12, 0.02, 0.0)
+	handle_bottom.position = Vector3(0.09, 0.015, 0.0)
 	mug.add_child(handle_bottom)
 
 	var coffee_surface := MeshInstance3D.new()
 	var coffee_mesh := CylinderMesh.new()
-	coffee_mesh.top_radius = 0.075
-	coffee_mesh.bottom_radius = 0.075
+	coffee_mesh.top_radius = 0.055
+	coffee_mesh.bottom_radius = 0.055
 	coffee_mesh.height = 0.001
 	coffee_surface.mesh = coffee_mesh
 
@@ -231,12 +220,12 @@ func _rebuild() -> void:
 	coffee_mat.roughness = 0.4
 	coffee_surface.material_override = coffee_mat
 
-	coffee_surface.position = Vector3(0.0, 0.125, 0.0)
+	coffee_surface.position = Vector3(0.0, 0.09, 0.0)
 	mug.add_child(coffee_surface)
 
 	var keyboard_base := MeshInstance3D.new()
 	var kb_mesh := BoxMesh.new()
-	kb_mesh.size = Vector3(0.7, 0.05, 0.28)
+	kb_mesh.size = Vector3(0.5, 0.04, 0.2)
 	keyboard_base.mesh = kb_mesh
 
 	var kb_mat := StandardMaterial3D.new()
@@ -245,16 +234,16 @@ func _rebuild() -> void:
 	kb_mat.metallic = 0.05
 	keyboard_base.material_override = kb_mat
 
-	keyboard_base.position = Vector3(-0.05, -0.43, 0.25)
+	keyboard_base.position = Vector3(-0.05, -0.44, 0.18)
 	desk.add_child(keyboard_base)
 
 	var key_mat := StandardMaterial3D.new()
 	key_mat.albedo_color = Color(0.05, 0.05, 0.05)
 	key_mat.roughness = 0.8
 
-	var key_size := Vector3(0.05, 0.02, 0.05)
-	var start_x := -0.35
-	var start_z := 0.37
+	var key_size := Vector3(0.035, 0.015, 0.035)
+	var start_x := -0.25
+	var start_z := 0.26
 
 	for row in range(4):
 		for col in range(11):
@@ -264,9 +253,9 @@ func _rebuild() -> void:
 			key.mesh = key_mesh
 			key.material_override = key_mat
 
-			var x := start_x + col * 0.06
-			var y := -0.40
-			var z := start_z - row * 0.06
+			var x := start_x + col * 0.043
+			var y := -0.42
+			var z := start_z - row * 0.043
 			key.position = Vector3(x, y, z)
 			desk.add_child(key)
 

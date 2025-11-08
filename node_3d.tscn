@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=25 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
@@ -15,30 +15,18 @@
 [ext_resource type="Script" uid="uid://3ywrxnlpk8ke" path="res://scripts/camera_blind_shader_mesh.gd" id="12_wlxy5"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_noarx"]
-size = Vector3(60, 2, 60)
+size = Vector3(120, 2, 60)
 subdivide_width = 100
 subdivide_height = 100
 subdivide_depth = 100
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_noarx"]
-size = Vector3(60, 2, 60)
+size = Vector3(120, 2, 60)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6iypd"]
 render_priority = 0
 shader = ExtResource("1_6iypd")
 shader_parameter/stress_level_1 = false
-
-[sub_resource type="BoxMesh" id="BoxMesh_r3fl7"]
-size = Vector3(2, 15, 60)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_jka67"]
-size = Vector3(2, 15, 60)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_i5arm"]
-size = Vector3(60, 15, 2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_jka67"]
-size = Vector3(60, 15, 2)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
 radius = 0.15
@@ -96,6 +84,7 @@ mesh = SubResource("BoxMesh_noarx")
 shape = SubResource("BoxShape3D_noarx")
 
 [node name="Ground" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Map/Ground"]
 material_override = SubResource("ShaderMaterial_6iypd")
