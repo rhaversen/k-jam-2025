@@ -20,12 +20,34 @@ func _unhandled_input(event: InputEvent) -> void:
 	#elif event.is_action_pressed("ui_accept"):
 		#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
+var drift = Vector2(0.0, 0.0);
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	var look_speed := keyboard_look_speed
 	
 	if frozen:
 		return
+
+	if get_parent().is_stressed_1()["camera"]:
+		if randi_range(0, 100) < 15:
+			drift.x += 0.1 * look_speed * delta
+		if randi_range(0, 100) < 15:
+			drift.y += 0.1 * look_speed * delta
+		if randi_range(0, 100) < 15:
+			drift.x -= 0.1 * look_speed * delta
+		if randi_range(0, 100) < 15:
+			drift.y -= 0.1 * look_speed * delta
+			
+		rotation.x += drift.x
+		rotation.y += drift.y
+		
+		if abs(drift.x) > 1 || abs(drift.y) > 1:
+			drift.x = 0
+			drift.y = 0
+	else:
+		drift.x = 0
+		drift.y = 0
 
 	# Horizontal rotation (yaw)
 	if Input.is_action_pressed("look_right"):

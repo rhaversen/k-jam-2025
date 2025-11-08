@@ -5,12 +5,37 @@ extends CharacterBody3D
 # The downward acceleration when in the air, in meters per second squared.
 @export var fall_acceleration = 75
 
-static var blind = 0.0
-static var stressed_1 := false
-static func is_stressed_1() -> bool:
-	return stressed_1
+static var stress_pressed = false
+
+static var stressed_1_var = false
+static var stressed_1 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
+static var stressed_1_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0}
+static var stressed_1_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
+static func is_stressed_1() -> Dictionary:
+	return stressed_1_dict
+	
+static var stressed_2_var = false
+static var stressed_2 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
+static var stressed_2_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0}
+static var stressed_2_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
+static func is_stressed_2() -> Dictionary:
+	return stressed_2_dict
 
 var target_velocity = Vector3.ZERO
+
+func check_dict(delta: float, event: String) -> void:
+	if stressed_1_dict[event]:
+		stressed_1_duration[event] -= delta
+		if stressed_1_duration[event] <= 0:
+			stressed_1_duration[event] = 0.0
+			stressed_1_dict[event] = false
+	
+	if stressed_1[event] && !stressed_1_dict[event]:
+		var roll_value = randi_range(0, 1000)
+		if roll_value == 0:
+			stressed_1_dict[event] = true
+			stressed_1_duration[event] = randf_range(1,10)
+		
 	
 func _physics_process(delta: float) -> void:
 	# We create a local variable to store the input direction.
@@ -26,10 +51,23 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("move_forward"):
 		direction.z += 1
 		
-	if Input.is_action_pressed("stress"):
-		stressed_1 = true
-		blind = 0.5
-		
+	if Input.is_action_just_pressed("stress"):
+		if !stressed_1_var && !stress_pressed:
+			stressed_1["blind"] = true
+			stressed_1["camera"] = true
+			stressed_1["color"] = true
+			stressed_1["earthquake"] = true
+			stressed_1["ground"] = true
+			stress_pressed = true
+		else:
+			stressed_2["blind"] = true
+	
+	check_dict(delta, "color")
+	check_dict(delta, "blind")
+	check_dict(delta, "camera")
+	check_dict(delta, "earthquake")
+	check_dict(delta, "ground")
+	
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
 		# Setting the basis property will affect the rotation of the node.

@@ -8,4 +8,4 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	var mat = material_override
 	if mat is ShaderMaterial:
-		mat.set_shader_parameter("stress_level_1", get_node("../../../Player").is_stressed_1())
+		mat.set_shader_parameter("stress_level_1", get_node("../../../Player").is_stressed_1()["ground"])

@@ -13,7 +13,7 @@ func _process(delta):
 	if playing:
 		return
 
-	if get_node("../../Player").is_stressed_1():
+	if get_node("../../Player").is_stressed_1()["earthquake"]:
 		var listener_pos = get_viewport().get_camera_3d().global_transform.origin
 		var distance = global_transform.origin.distance_to(listener_pos)
 	

@@ -45,24 +45,25 @@ void fragment() {
 	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	view.xyz /= view.w;
 	float linear_depth = -view.z / depth_range;
+	//
+	//ALBEDO = normal; 				// showing normal texture
+    //
+	//if (stress_level_1) {
+		//ALPHA = 0.1;
+	//} else {
+		//ALPHA = 0.0;
+	//}
 	
-	ALBEDO = normal; 				// showing normal texture
-    
-	if (stress_level_1) {
-		ALPHA = 0.1;
+	//if ((uv.x-0.75)*(uv.x-0.75) + 0.1*(uv.y-0.5)*(uv.y-0.5) >= 0.3 * 0.3) {
+	if (blind > 0.0) {
+		float d = (uv.x-0.75)*(uv.x-0.75)+ 0.1*(uv.y-0.5)*(uv.y-0.5);
+		float new_alpha = blind*d/(0.25*0.25+0.1*0.25*0.25);
+		ALBEDO = vec3(0.0,0.0,0.0);
+		ALPHA = new_alpha;
 	} else {
 		ALPHA = 0.0;
 	}
-	
-	//if ((uv.x-0.75)*(uv.x-0.75) + 0.1*(uv.y-0.5)*(uv.y-0.5) >= 0.3 * 0.3) {
-	//if (blind > 0.0) {
-		//float d = (uv.x-0.75)*(uv.x-0.75)+ 0.1*(uv.y-0.5)*(uv.y-0.5);
-		//float new_alpha = (blind*blind)*d/(0.35*0.35+0.1*0.35*0.35);
-		////if (new_alpha > 0.1) {
-		    //ALBEDO = vec3(0.0,0.0,0.0);
-			//ALPHA = new_alpha;
-		////}
-	//}
+	// ALPHA = 0.5;
 
     // float r = sin(TIME) * 0.5 + 0.5;   // oscillates between 0–1
     // float g = sin(TIME + 2.0) * 0.5 + 0.5; // phase-shifted

@@ -1,17 +1,19 @@
-[gd_scene load_steps=27 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=30 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
 [ext_resource type="Script" uid="uid://cfufnjs54lguo" path="res://cubical_sound_script.gd" id="1_wc5p8"]
 [ext_resource type="Script" uid="uid://b6lbfrmriyl0d" path="res://player_camera.gd" id="2_a0tk4"]
 [ext_resource type="Script" uid="uid://dl2grq3dproqn" path="res://scripts/floor_mesh.gd" id="2_cdqbm"]
-[ext_resource type="Script" path="res://scripts/office.gd" id="3_a0tk4"]
+[ext_resource type="Script" uid="uid://csujpnt82ita5" path="res://scripts/office.gd" id="3_a0tk4"]
 [ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
 [ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
 [ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
 [ext_resource type="Script" uid="uid://cdmnois872y32" path="res://area_3d.gd" id="9_4arys"]
 [ext_resource type="Shader" uid="uid://l6y0mcah5cqj" path="res://shader/camera_surface_shader.gdshader" id="10_6iypd"]
+[ext_resource type="Shader" uid="uid://cw701dh2kkbyp" path="res://shader/camera_blind_shader.gdshader" id="11_imku0"]
 [ext_resource type="Script" uid="uid://dn1dnjfnyvkkb" path="res://scripts/camera_shader_mesh.gd" id="11_tereu"]
+[ext_resource type="Script" uid="uid://3ywrxnlpk8ke" path="res://scripts/camera_blind_shader_mesh.gd" id="12_wlxy5"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_noarx"]
 size = Vector3(60, 2, 60)
@@ -50,11 +52,22 @@ height = 2.5
 [sub_resource type="BoxShape3D" id="BoxShape3D_4arys"]
 size = Vector3(5, 5, 5)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_imku0"]
+render_priority = 0
+shader = ExtResource("11_imku0")
+shader_parameter/edge_only = true
+shader_parameter/edge_threshold = 0.2
+shader_parameter/line_color = Color(0.043, 0.282, 0.467, 1)
+shader_parameter/background_color = Color(0.408, 0.969, 0.694, 1)
+shader_parameter/depth_range = 0.0
+shader_parameter/stress_level_1 = false
+shader_parameter/blind = 0.0
+
 [sub_resource type="QuadMesh" id="QuadMesh_tereu"]
 flip_faces = true
 size = Vector2(2, 2)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_cdqbm"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wlxy5"]
 render_priority = 0
 shader = ExtResource("10_6iypd")
 shader_parameter/edge_only = true
@@ -63,7 +76,7 @@ shader_parameter/line_color = Color(0.043, 0.282, 0.467, 1)
 shader_parameter/background_color = Color(0.408, 0.969, 0.694, 1)
 shader_parameter/depth_range = 0.0
 shader_parameter/stress_level_1 = false
-shader_parameter/blind = 1.0
+shader_parameter/blind = 0.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tereu"]
 
@@ -164,11 +177,19 @@ script = ExtResource("9_4arys")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
 shape = SubResource("BoxShape3D_4arys")
 
-[node name="CameraShaderMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5486724, 0.83314323)
+[node name="CameraBlindMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.097345, 1.6662865)
+material_override = SubResource("ShaderMaterial_imku0")
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_tereu")
-surface_material_override/0 = SubResource("ShaderMaterial_cdqbm")
+skeleton = NodePath("../CameraColorMesh")
+script = ExtResource("12_wlxy5")
+
+[node name="CameraColorMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5486724, 0.83314323)
+material_override = SubResource("ShaderMaterial_wlxy5")
+extra_cull_margin = 16384.0
+mesh = SubResource("QuadMesh_tereu")
 script = ExtResource("11_tereu")
 
 [node name="Orb" type="MeshInstance3D" parent="."]
