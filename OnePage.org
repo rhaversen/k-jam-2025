@@ -16,6 +16,7 @@ Puzzle: Excel document (Turn on / off light in `cells` cubicals)
 - Pools
 - EW/WE
 - Don't starve (together)
+- Operator
 
 *** Themes
 Trauma
@@ -37,7 +38,6 @@ Pre-discovary
 
 *** Focus
 Story telling
-
 The goal isn’t to “win” against dissociation, but to understand it — by maintaining balance between control and overwhelm.
 
 *** Category

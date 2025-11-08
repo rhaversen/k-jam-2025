@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=18 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
 [ext_resource type="Script" uid="uid://cfufnjs54lguo" path="res://cubical_sound_script.gd" id="1_wc5p8"]
@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
 [ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
 [ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
+[ext_resource type="Script" uid="uid://cdmnois872y32" path="res://area_3d.gd" id="9_4arys"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_noarx"]
 size = Vector3(60, 2, 60)
@@ -29,6 +30,9 @@ size = Vector3(60, 15, 2)
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_a202f"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4arys"]
+size = Vector3(5, 5, 5)
 
 [node name="Main" type="Node3D"]
 
@@ -94,24 +98,22 @@ shape = SubResource("BoxShape3D_i5arm")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1025121, 0)
 script = ExtResource("1_wc5p8")
 
-[node name="Player" type="Node3D" parent="."]
+[node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, 0)
-
-[node name="CharacterBody3D" type="CharacterBody3D" parent="Player"]
 script = ExtResource("1_a202f")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CharacterBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 shape = SubResource("CapsuleShape3D_4xowi")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Player/CharacterBody3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
 mesh = SubResource("CapsuleMesh_a202f")
-skeleton = NodePath("../..")
+skeleton = NodePath("")
 
-[node name="Camera3D" type="Camera3D" parent="Player/CharacterBody3D"]
+[node name="Camera3D" type="Camera3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.846591, 0)
 script = ExtResource("2_a0tk4")
 
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Player/CharacterBody3D"]
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8172951, 0)
 stream = ExtResource("3_jka67")
 script = ExtResource("4_i5arm")
@@ -125,3 +127,9 @@ script = ExtResource("3_r3fl7")
 [node name="Office" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 script = ExtResource("3_a0tk4")
+
+[node name="Area3D" type="Area3D" parent="."]
+script = ExtResource("9_4arys")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_4arys")
