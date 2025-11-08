@@ -19,6 +19,6 @@ func _process(delta):
 	var volume_ratio = 1-(clamp(distance, min_distance, max_distance)-min_distance)/(max_distance-min_distance)
 	volume_db = linear_to_db(volume_ratio)
 	# volume_db = -15 * volume_ratio
-	play()
+	# dddwplay()
 		#play()
 		#wait_time = 0

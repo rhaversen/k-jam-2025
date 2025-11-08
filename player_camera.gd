@@ -3,6 +3,8 @@ extends Camera3D
 @export var keyboard_look_speed := 1.5
 @export var mouse_sensitivity := 0.004
 
+@export var frozen := false
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -13,14 +15,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotation.x -= event.relative.y * mouse_sensitivity
 		_clamp_pitch()
 
-	if event.is_action_pressed("ui_cancel"):
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	elif event.is_action_pressed("ui_accept"):
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	#if event.is_action_pressed("ui_cancel"):
+		#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	#elif event.is_action_pressed("ui_accept"):
+		#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	var look_speed := keyboard_look_speed
+	
+	if frozen:
+		return
 
 	# Horizontal rotation (yaw)
 	if Input.is_action_pressed("look_right"):

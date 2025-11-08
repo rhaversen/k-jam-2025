@@ -25,11 +25,20 @@ func _process(delta):
 	if player_inside and Input.is_action_just_pressed("ui_accept"):
 		var tween = get_tree().create_tween()
 		var direction = (camera_target_position - camera.global_transform.origin).normalized()
+		
+		var target_dir = -direction
+		var yaw = atan2(target_dir.x, target_dir.z)     # rotation around Y-axis
+		var horizontal_dist = sqrt(target_dir.x * target_dir.x + target_dir.z * target_dir.z)
+		var pitch = atan2(target_dir.y, horizontal_dist)  # rotation around X-axis
+
+		# Apply rotation
+		var rotation_degrees = Vector3(rad_to_deg(pitch), rad_to_deg(yaw), 0)
+		camera.frozen = true
 
 		tween.tween_property(
 			camera,
 			"rotation_degrees",
-			direction,
+			rotation_degrees,
 			camera_move_duration
 		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		
@@ -37,6 +46,13 @@ func _process(delta):
 			camera,
 			"global_transform:origin",
 			camera_target_position,
+			camera_move_duration
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.parallel()
+		tween.tween_property(
+			camera,
+			"rotation_degrees",
+			Vector3(0.0,0.0,0.0),
 			camera_move_duration
 		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		
