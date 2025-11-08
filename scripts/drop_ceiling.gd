@@ -1,6 +1,6 @@
 extends Node3D
 
-@export var ceiling_height: float = 2
+@export var ceiling_height: float = 1
 
 @export var solid_plane_height: float = 1
 @export var solid_plane_color: Color = Color(0.5, 0.5, 0.45)
@@ -11,16 +11,16 @@ extends Node3D
 @export var tile_color: Color = Color(0.6, 0.6, 0.55)
 @export var tile_thickness: float = 0.01
 
-@export var rod_height: float = 0.8
-@export var rod_thickness: float = 0.05
-@export var rod_color: Color = Color(0.6, 0.5, 0.56)
+@export var rod_height: float = 1
+@export var rod_thickness: float = 0.03
+@export var rod_color: Color = Color(0.9, 0.9, 0.9)
 
 @export var light_height: float = 0.9
 @export var light_spacing: Vector2 = Vector2(3.2, 3.0)
 @export var light_range: float = 9.0
-@export var light_energy: float = 0.1
+@export var light_energy: float = 1
 @export var light_color: Color = Color(1.0, 0.98, 0.92)
-@export var light_fixture_size: Vector2 = Vector2(1.1, 0.35)
+@export var light_fixture_size: Vector2 = Vector2(1.1, 0.2)
 @export var fixture_emission_energy: float = 1
 @export var fixture_color: Color = Color(0.95, 0.96, 0.98)
 
@@ -121,27 +121,81 @@ func _spawn_fixture(local_position: Vector3) -> void:
 	fixture.position = local_position
 	add_child(fixture)
 
-	var housing := MeshInstance3D.new()
-	var housing_mesh := BoxMesh.new()
 	var housing_height: float = 0.05
-	housing_mesh.size = Vector3(light_fixture_size.x, housing_height, light_fixture_size.y)
-	housing.mesh = housing_mesh
-	var housing_mat := StandardMaterial3D.new()
-	housing_mat.albedo_color = fixture_color
-	housing_mat.emission_enabled = true
-	housing_mat.emission = light_color
-	housing_mat.emission_energy_multiplier = fixture_emission_energy
-	housing.material_override = housing_mat
-	housing.position = Vector3(0.0, -housing_height * 0.5, 0.0)
-	fixture.add_child(housing)
-
-	var omni := OmniLight3D.new()
-	omni.light_color = light_color
-	omni.light_energy = light_energy
-	omni.omni_range = light_range
-	omni.shadow_enabled = false
-	omni.position = Vector3(0.0, -housing_height, 0.0)
-	fixture.add_child(omni)
+	var tube_radius: float = 0.02
+	var tube_spacing: float = 0.05
+	var casing_thickness: float = 0.01
+	
+	# Create thin casing frame (sides and top, open on bottom)
+	var casing_mat := StandardMaterial3D.new()
+	casing_mat.albedo_color = fixture_color
+	casing_mat.roughness = 0.5
+	casing_mat.metallic = 0.3
+	
+	# Top of casing
+	var casing_top := MeshInstance3D.new()
+	var casing_top_mesh := BoxMesh.new()
+	casing_top_mesh.size = Vector3(light_fixture_size.x, casing_thickness, light_fixture_size.y)
+	casing_top.mesh = casing_top_mesh
+	casing_top.material_override = casing_mat
+	casing_top.position = Vector3(0.0, casing_thickness * 0.5, 0.0)
+	fixture.add_child(casing_top)
+	
+	# Left side of casing
+	var casing_left := MeshInstance3D.new()
+	var casing_left_mesh := BoxMesh.new()
+	casing_left_mesh.size = Vector3(light_fixture_size.x, housing_height, casing_thickness)
+	casing_left.mesh = casing_left_mesh
+	casing_left.material_override = casing_mat
+	casing_left.position = Vector3(0.0, -housing_height * 0.5, -light_fixture_size.y * 0.5 + casing_thickness * 0.5)
+	fixture.add_child(casing_left)
+	
+	# Right side of casing
+	var casing_right := MeshInstance3D.new()
+	var casing_right_mesh := BoxMesh.new()
+	casing_right_mesh.size = Vector3(light_fixture_size.x, housing_height, casing_thickness)
+	casing_right.mesh = casing_right_mesh
+	casing_right.material_override = casing_mat
+	casing_right.position = Vector3(0.0, -housing_height * 0.5, light_fixture_size.y * 0.5 - casing_thickness * 0.5)
+	fixture.add_child(casing_right)
+	
+	# Create two fluorescent tube cylinders going lengthwise (along X axis)
+	var tube_length: float = light_fixture_size.x - 0.1
+	var tube_offset_z: float = tube_spacing * 0.5
+	
+	# First tube
+	var tube1 := MeshInstance3D.new()
+	var tube1_mesh := CylinderMesh.new()
+	tube1_mesh.top_radius = tube_radius
+	tube1_mesh.bottom_radius = tube_radius
+	tube1_mesh.height = tube_length
+	tube1.mesh = tube1_mesh
+	var tube1_mat := StandardMaterial3D.new()
+	tube1_mat.albedo_color = light_color
+	tube1_mat.emission_enabled = true
+	tube1_mat.emission = light_color
+	tube1_mat.emission_energy_multiplier = fixture_emission_energy * 2.0
+	tube1.material_override = tube1_mat
+	tube1.position = Vector3(0.0, -housing_height * 0.5, -tube_offset_z)
+	tube1.rotation_degrees = Vector3(0, 0, 90)
+	fixture.add_child(tube1)
+	
+	# Second tube
+	var tube2 := MeshInstance3D.new()
+	var tube2_mesh := CylinderMesh.new()
+	tube2_mesh.top_radius = tube_radius
+	tube2_mesh.bottom_radius = tube_radius
+	tube2_mesh.height = tube_length
+	tube2.mesh = tube2_mesh
+	var tube2_mat := StandardMaterial3D.new()
+	tube2_mat.albedo_color = light_color
+	tube2_mat.emission_enabled = true
+	tube2_mat.emission = light_color
+	tube2_mat.emission_energy_multiplier = fixture_emission_energy * 2.0
+	tube2.material_override = tube2_mat
+	tube2.position = Vector3(0.0, -housing_height * 0.5, tube_offset_z)
+	tube2.rotation_degrees = Vector3(0, 0, 90)
+	fixture.add_child(tube2)
 	
 	# Add vertical rods at each end of the fixture
 	var rod_offset_x := light_fixture_size.x * 0.5 - rod_thickness
@@ -162,5 +216,7 @@ func _spawn_rod(parent: Node3D, local_position: Vector3) -> void:
 	rod_mat.roughness = 0.4
 	rod.material_override = rod_mat
 	
-	rod.position = local_position + Vector3(0.0, rod_height * 0.5, 0.0)
+	# Position rod to start from the top of the casing and go upward
+	# The casing top is at y=0.01, so start the rod there
+	rod.position = local_position + Vector3(0.0, 0.01 + rod_height * 0.5, 0.0)
 	parent.add_child(rod)
