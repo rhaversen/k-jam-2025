@@ -24,14 +24,15 @@ func _on_body_exited(body: Node) -> void:
 func _process(delta):
 	if player_inside and Input.is_action_just_pressed("ui_accept"):
 		var tween = get_tree().create_tween()
+		var direction = (camera_target_position - camera.global_transform.origin).normalized()
 
 		tween.tween_property(
 			camera,
 			"rotation_degrees",
-			camera_target_rotation,
+			direction,
 			camera_move_duration
 		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
+		
 		tween.tween_property(
 			camera,
 			"global_transform:origin",
