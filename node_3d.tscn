@@ -63,6 +63,7 @@ shader_parameter/line_color = Color(0.043, 0.282, 0.467, 1)
 shader_parameter/background_color = Color(0.408, 0.969, 0.694, 1)
 shader_parameter/depth_range = 0.0
 shader_parameter/stress_level_1 = false
+shader_parameter/blind = 1.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tereu"]
 

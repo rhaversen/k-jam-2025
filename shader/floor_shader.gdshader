@@ -7,11 +7,11 @@ uniform bool stress_level_1 = false; // variable that can be changed from code
 void vertex() {
      // Example: a small wavy offset
 	if (stress_level_1) {
-	    float t = TIME;
+	    float t = TIME*2.0;
 	    vec3 pos = VERTEX;
 		
-		float amplitude = 0.08;
-		float frequency = 0.01;
+		float amplitude = 0.04;
+		float frequency = 0.02;
 		float steepness = 0.0;
 
 	    // combine 3 different sine directions
@@ -27,7 +27,9 @@ void vertex() {
 
 	    VERTEX = pos;
 	} else {
-		
+	    vec3 pos = VERTEX;
+		pos.y += 1.1;
+	    VERTEX = pos;
 	}
 }
 

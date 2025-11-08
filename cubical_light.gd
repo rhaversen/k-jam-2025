@@ -9,7 +9,6 @@ var flicker_time = 0
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	
 	# light_color = Color((9*light_color.r + randf())/10, (9*light_color.g + randf())/10, (9*light_color.b + randf())/10)
 	# light_color = Color.from_hsv(1, 1, fmod(light_color.v + randf() / 100, 1.0))
 	#light_color = Color.from_hsv(fmod(light_color.h + randf() / 100, 1.0), 1, 1)

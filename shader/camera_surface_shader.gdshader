@@ -15,6 +15,8 @@ uniform float depth_range:hint_range(0.1, 100.0, 0.1);
 
 uniform bool stress_level_1 = false; // variable that can be changed from code
 
+uniform float blind:hint_range(0.0, 1.0) = 0.0; // variable that can be changed from code
+
 const mat3 sobel_y = mat3(
 	vec3(1.0, 0.0, -1.0),
 	vec3(2.0, 0.0, -2.0),
@@ -50,6 +52,14 @@ void fragment() {
 		ALPHA = 0.1;
 	} else {
 		ALPHA = 0.0;
+	}
+	
+	//if ((uv.x-0.75)*(uv.x-0.75) + 0.1*(uv.y-0.5)*(uv.y-0.5) >= 0.3 * 0.3) {
+	if (blind > 0.0) {
+		float d = (uv.x-0.75)*(uv.x-0.75)+ 0.1*(uv.y-0.5)*(uv.y-0.5);
+		float new_alpha = (blind*blind)*d/(0.35*0.35+0.1*0.35*0.35);
+		ALBEDO = mix(vec3(0.0,0.0,0.0), ALBEDO, 1.0-new_alpha);
+		ALPHA = new_alpha;
 	}
 
     // float r = sin(TIME) * 0.5 + 0.5;   // oscillates between 0–1

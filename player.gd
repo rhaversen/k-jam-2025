@@ -5,6 +5,7 @@ extends CharacterBody3D
 # The downward acceleration when in the air, in meters per second squared.
 @export var fall_acceleration = 75
 
+static var blind = 0.0
 static var stressed_1 := false
 static func is_stressed_1() -> bool:
 	return stressed_1
@@ -27,6 +28,7 @@ func _physics_process(delta: float) -> void:
 		
 	if Input.is_action_pressed("stress"):
 		stressed_1 = true
+		blind = 0.5
 		
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
