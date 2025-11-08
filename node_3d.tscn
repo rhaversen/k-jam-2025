@@ -30,11 +30,11 @@ shader_parameter/stress_level_1 = false
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
 radius = 0.15
-height = 2.5
+height = 2.8
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_a202f"]
 radius = 0.15
-height = 2.5
+height = 2.8
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4arys"]
 size = Vector3(5, 5, 5)
@@ -101,7 +101,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1025121, 0)
 script = ExtResource("1_wc5p8")
 
 [node name="Player" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.076096, -1)
 script = ExtResource("1_a202f")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
