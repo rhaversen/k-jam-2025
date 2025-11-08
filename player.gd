@@ -28,9 +28,18 @@ func _physics_process(delta: float) -> void:
 
 	var cam = $Camera3D
 	# Rotate input direction by the player’s Y rotation (yaw)
-	var forward = -cam.global_transform.basis.z  # Forward direction
-	var right = cam.global_transform.basis.x     # Right direction
-	var move_dir = (right * direction.x + forward * direction.z).normalized()
+	var forward = -cam.global_transform.basis.z
+	forward.y = 0
+	if forward.length_squared() > 0:
+		forward = forward.normalized()
+	var right = cam.global_transform.basis.x
+	right.y = 0
+	if right.length_squared() > 0:
+		right = right.normalized()
+	var move_dir = Vector3.ZERO
+	if direction != Vector3.ZERO:
+		# Use horizontal forward/right so look pitch doesn't affect speed.
+		move_dir = (right * direction.x + forward * direction.z).normalized()
 
 	# Ground Velocity
 	target_velocity.x = move_dir.x * speed
