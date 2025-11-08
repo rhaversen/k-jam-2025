@@ -1,6 +1,7 @@
 extends Node3D
 # High-level office builder that spawns cubicle rows and shared lighting.
 
+const DropCeiling := preload("res://scripts/drop_ceiling.gd")
 const Cubicle := preload("res://scripts/cubicle.gd")
 
 @export var cubicle_count: int = 20
@@ -31,6 +32,7 @@ func _rebuild_office() -> void:
 		var fallback_depth := 6.0
 		var fallback_center := 0.0
 		_create_floor(fallback_length, fallback_depth, fallback_center)
+		_create_drop_ceiling(fallback_length, fallback_depth, fallback_center)
 		return
 
 	var aisle_half: float = max(0.0, aisle_width * 0.5)
@@ -99,6 +101,7 @@ func _rebuild_office() -> void:
 	var floor_depth: float = max(6.0, (max_z - min_z) + 6.0)
 	var floor_center: float = (min_z + max_z) * 0.5
 	_create_floor(floor_length, floor_depth, floor_center)
+	_create_drop_ceiling(floor_length, floor_depth, floor_center)
 
 	print("✅ Generated %d cubicle pairs at spacing %.2f with aisle %.2f." % [cubicle_count, spacing, aisle_width])
 
@@ -132,3 +135,10 @@ func _create_floor(total_length: float, total_depth: float, center_z: float) -> 
 	floor_mesh_instance.material_override = floor_mat
 	floor_mesh_instance.position = Vector3(0, -1.0, center_z)
 	add_child(floor_mesh_instance)
+
+func _create_drop_ceiling(total_length: float, total_depth: float, center_z: float) -> void:
+	if DropCeiling == null:
+		return
+	var ceiling := DropCeiling.new()
+	add_child(ceiling)
+	ceiling.setup(total_length, total_depth, center_z)
