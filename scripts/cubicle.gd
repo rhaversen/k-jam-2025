@@ -7,8 +7,19 @@ extends Node3D
 
 const WALL_HEIGHT := 2.0
 const HALF_WIDTH := 1.5
+const POSTER_TEXTURES := [
+	"res://textures/poster1.png",
+	"res://textures/poster2.png",
+	"res://textures/poster3.png",
+	"res://textures/poster4.png",
+	"res://textures/poster5.png",
+	"res://textures/poster6.png",
+	"res://textures/poster7.png",
+	"res://textures/poster8.png"
+]
 
 var _built := false
+var _rng := RandomNumberGenerator.new()
 
 func setup(id_value: int, depth: float, thickness: float) -> void:
 	employee_id = id_value
@@ -22,6 +33,10 @@ func _ready() -> void:
 
 func _rebuild() -> void:
 	_clear_children()
+	var seed: int = abs(int(hash(str(employee_id))))
+	if seed == 0:
+		seed = 1
+	_rng.seed = seed
 	var wall_mat := StandardMaterial3D.new()
 	wall_mat.albedo_color = Color(0.75, 0.75, 0.82)
 	wall_mat.roughness = 0.9
@@ -94,8 +109,18 @@ func _rebuild() -> void:
 	body_mat.albedo_color = Color(0.05, 0.05, 0.05)
 	body_mat.roughness = 0.9
 	monitor_body.material_override = body_mat
-	monitor_body.position = Vector3(0, -0.08, -0.15)
-	monitor_body.rotation_degrees = Vector3(0, 180, 0)
+	var monitor_base_position := Vector3(0, -0.08, -0.15)
+	var monitor_jitter := Vector3(
+		_rng.randf_range(-0.05, 0.05),
+		_rng.randf_range(-0.02, 0.02),
+		_rng.randf_range(-0.05, 0.05)
+	)
+	monitor_body.position = monitor_base_position + monitor_jitter
+	monitor_body.rotation_degrees = Vector3(
+		_rng.randf_range(-2.0, 2.0),
+		180.0 + _rng.randf_range(-5.0, 5.0),
+		_rng.randf_range(-2.0, 2.0)
+	)
 	desk.add_child(monitor_body)
 
 	var screen := MeshInstance3D.new()
@@ -107,7 +132,12 @@ func _rebuild() -> void:
 	screen_mat.emission = Color(0.1, 0.8, 0.6)
 	screen_mat.emission_energy_multiplier = 3.5
 	screen.material_override = screen_mat
-	screen.position = Vector3(0, 0, -0.03)
+	var screen_base_position := Vector3(0, 0, -0.03)
+	screen.position = screen_base_position + Vector3(
+		_rng.randf_range(-0.02, 0.02),
+		_rng.randf_range(-0.02, 0.02),
+		_rng.randf_range(-0.005, 0.005)
+	)
 	monitor_body.add_child(screen)
 
 	# Use a SpotLight3D to simulate the screen emitting light forward only
@@ -142,7 +172,13 @@ func _rebuild() -> void:
 	mouse_mat.metallic = 0.05
 	mouse.material_override = mouse_mat
 
-	mouse.position = Vector3(0.35, -0.42, 0.2)
+	var mouse_base_position := Vector3(0.35, -0.42, 0.2)
+	mouse.position = mouse_base_position + Vector3(
+		_rng.randf_range(-0.08, 0.08),
+		0.0,
+		_rng.randf_range(-0.08, 0.08)
+	)
+	mouse.rotation_degrees = Vector3(0.0, _rng.randf_range(-10.0, 10.0), 0.0)
 	desk.add_child(mouse)
 
 	var mouse_line := MeshInstance3D.new()
@@ -170,7 +206,13 @@ func _rebuild() -> void:
 	mug_mat.roughness = 0.3
 	mug.material_override = mug_mat
 
-	mug.position = Vector3(0.6, -0.43, 0.2)
+	var mug_base_position := Vector3(0.6, -0.43, 0.2)
+	mug.position = mug_base_position + Vector3(
+		_rng.randf_range(-0.08, 0.08),
+		0.0,
+		_rng.randf_range(-0.08, 0.08)
+	)
+	mug.rotation_degrees = Vector3(0.0, _rng.randf_range(0.0, 360.0), 0.0)
 	desk.add_child(mug)
 
 	var handle_mat := mug_mat
@@ -233,8 +275,13 @@ func _rebuild() -> void:
 	kb_mat.roughness = 0.6
 	kb_mat.metallic = 0.05
 	keyboard_base.material_override = kb_mat
-
-	keyboard_base.position = Vector3(-0.05, -0.44, 0.18)
+	var keyboard_base_position := Vector3(-0.05, -0.44, 0.18)
+	var keyboard_jitter := Vector3(
+		_rng.randf_range(-0.08, 0.08),
+		0.0,
+		_rng.randf_range(-0.05, 0.05)
+	)
+	keyboard_base.position = keyboard_base_position + keyboard_jitter
 	desk.add_child(keyboard_base)
 
 	var key_mat := StandardMaterial3D.new()
@@ -244,6 +291,7 @@ func _rebuild() -> void:
 	var key_size := Vector3(0.035, 0.015, 0.035)
 	var start_x := -0.25
 	var start_z := 0.26
+	var key_offset := keyboard_jitter
 
 	for row in range(4):
 		for col in range(11):
@@ -256,10 +304,10 @@ func _rebuild() -> void:
 			var x := start_x + col * 0.043
 			var y := -0.42
 			var z := start_z - row * 0.043
-			key.position = Vector3(x, y, z)
+			key.position = Vector3(x, y, z) + key_offset
 			desk.add_child(key)
 
-	_add_posters(self, interior_depth)
+	_add_posters(self, interior_depth, _rng)
 	_center_layout()
 	_built = true
 
@@ -333,41 +381,36 @@ func make_poster_material(texture_path: String, poster_size) -> StandardMaterial
 	mat.albedo_color = Color(1, 1, 1)
 	return mat
 
-func _add_posters(parent: Node3D, depth: float) -> void:
+func _add_posters(parent: Node3D, depth: float, rng: RandomNumberGenerator) -> void:
 	var target_h := 0.8
 	var poster_z := -depth + 0.05
 
-	var poster_back_left := MeshInstance3D.new()
-	var poster_mesh_left := PlaneMesh.new()
-	var tex_left := load("res://textures/poster1.png")
-	var size_left := Vector2(1.0, 0.7)
-	if tex_left is Texture2D and target_h > 0.0:
-		var img_size_left: Vector2i = tex_left.get_size()
-		if img_size_left.y != 0:
-			var aspect_left := float(img_size_left.x) / float(img_size_left.y)
-			size_left = Vector2(aspect_left * target_h, target_h)
-	poster_mesh_left.size = size_left
-	poster_back_left.mesh = poster_mesh_left
-	poster_back_left.material_override = make_poster_material("res://textures/poster1.png", poster_mesh_left.size)
-	poster_back_left.position = Vector3(-0.8, 0.4, poster_z)
-	poster_back_left.rotation_degrees = Vector3(90, 0, 0)
-	parent.add_child(poster_back_left)
-
-	var poster_back_right := MeshInstance3D.new()
-	var poster_mesh_right := PlaneMesh.new()
-	var tex_right := load("res://textures/poster2.png")
-	var size_right := Vector2(1.0, 0.7)
-	if tex_right is Texture2D and target_h > 0.0:
-		var img_size_right: Vector2i = tex_right.get_size()
-		if img_size_right.y != 0:
-			var aspect_right := float(img_size_right.x) / float(img_size_right.y)
-			size_right = Vector2(aspect_right * target_h, target_h)
-	poster_mesh_right.size = size_right
-	poster_back_right.mesh = poster_mesh_right
-	poster_back_right.material_override = make_poster_material("res://textures/poster2.png", poster_mesh_right.size)
-	poster_back_right.position = Vector3(0.8, 0.4, poster_z)
-	poster_back_right.rotation_degrees = Vector3(90, 0, 0)
-	parent.add_child(poster_back_right)
+	var available_textures: Array = POSTER_TEXTURES.duplicate()
+	var lateral_offsets := [-0.8, 0.8]
+	for index in range(lateral_offsets.size()):
+		if rng.randf() > 0.25:
+			continue
+		if available_textures.is_empty():
+			break
+		var texture_index: int = rng.randi_range(0, available_textures.size() - 1)
+		var texture_path: String = available_textures[texture_index]
+		available_textures.remove_at(texture_index)
+		
+		var poster := MeshInstance3D.new()
+		var mesh := PlaneMesh.new()
+		var tex := load(texture_path)
+		var size := Vector2(1.0, 0.7)
+		if tex is Texture2D and target_h > 0.0:
+			var img_size: Vector2i = tex.get_size()
+			if img_size.y != 0:
+				var aspect := float(img_size.x) / float(img_size.y)
+				size = Vector2(aspect * target_h, target_h)
+		mesh.size = size
+		poster.mesh = mesh
+		poster.material_override = make_poster_material(texture_path, mesh.size)
+		poster.position = Vector3(lateral_offsets[index] + rng.randf_range(-0.05, 0.05), 0.4 + rng.randf_range(-0.05, 0.05), poster_z + rng.randf_range(-0.02, 0.02))
+		poster.rotation_degrees = Vector3(90.0, rng.randf_range(-4.0, 4.0), 0.0)
+		parent.add_child(poster)
 
 func _add_front_wall_id(front_wall: StaticBody3D, id_value: int, wall_size: Vector3) -> void:
 	if front_wall == null:
