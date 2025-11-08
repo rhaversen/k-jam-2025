@@ -6,6 +6,7 @@ Starter i en elevator, man skal gå ud af. Efter hver dag går man tilbage til e
 ## Random events:
 En loftlampe længere væk, over en anden desk, er pludselig gået ud. Udforsk det.
 En cubicle der pludselig mangler.
+Ting der går i stykker; lamper fra loftet hænger og dingler, skærme der blinker, printere der spytter papir ud, posters der falder ned fra væggen.
 
 ## Folder Race
 Bugs:
