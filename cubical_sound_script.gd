@@ -5,7 +5,7 @@ extends AudioStreamPlayer3D
 var min_distance = 2.0   # distance at which sound is at full volume
 
 func _ready():
-	stream = preload("res://sound/untitled.wav")
+	stream = preload("res://sound/earthquake.wav")
 	max_distance = 20.0
 
 func _process(delta):
@@ -20,5 +20,5 @@ func _process(delta):
 	volume_db = linear_to_db(volume_ratio)
 	# volume_db = -15 * volume_ratio
 	# dddwplay()
-		#play()
+	play()
 		#wait_time = 0

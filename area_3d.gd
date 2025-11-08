@@ -1,6 +1,6 @@
 extends Area3D
 
-@export var target_scene : String = "res://Bootscreen.tscn"
+@export var target_scene : String = "res://scenes/ComputerDesktop.tscn"
 var player_inside := false
 @export var camera_node_path : NodePath = "../Player/Camera3D"  # Path from this node to the camera
 @export var camera_target_position : Vector3 = Vector3(0, 3.0, -5)  # World position
@@ -52,7 +52,7 @@ func _process(delta):
 		tween.tween_property(
 			camera,
 			"rotation_degrees",
-			Vector3(0.0,0.0,0.0),
+			camera_target_rotation,
 			camera_move_duration
 		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		

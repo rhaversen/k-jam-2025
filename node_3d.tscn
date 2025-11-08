@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=25 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://b6lbfrmriyl0d" path="res://player_camera.gd" id="2_a0tk4"]
 [ext_resource type="Script" uid="uid://mi7r5wcchrkn" path="res://scripts/office_cubicle.gd" id="3_a0tk4"]
 [ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
-
 [ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
 [ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
 [ext_resource type="Script" uid="uid://cdmnois872y32" path="res://area_3d.gd" id="9_4arys"]
@@ -61,6 +60,11 @@ shader_parameter/edge_threshold = 0.2
 shader_parameter/line_color = Color(0.043, 0.282, 0.467, 1)
 shader_parameter/background_color = Color(0.408, 0.969, 0.694, 1)
 shader_parameter/depth_range = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tereu"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_cdqbm"]
+material = SubResource("ShaderMaterial_tereu")
 
 [node name="Main" type="Node3D"]
 
@@ -128,7 +132,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1025121, 0)
 script = ExtResource("1_wc5p8")
 
 [node name="Player" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, -1.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, -1)
 script = ExtResource("1_a202f")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
@@ -158,13 +162,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 script = ExtResource("3_a0tk4")
 
 [node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
 script = ExtResource("9_4arys")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
 shape = SubResource("BoxShape3D_4arys")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="CameraShaderMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5486724, 0.83314323)
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_tereu")
 surface_material_override/0 = SubResource("ShaderMaterial_cdqbm")
+
+[node name="Orb" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
+mesh = SubResource("SphereMesh_cdqbm")
