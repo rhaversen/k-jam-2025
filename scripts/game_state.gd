@@ -4,6 +4,7 @@ const SPAWN_ELEVATOR := "elevator"
 const SPAWN_DESK := "desk"
 
 var current_day: int = 1
+var is_first_spawn: bool = true
 var next_spawn_location: String = SPAWN_ELEVATOR
 var desk_spawn_position: Vector3 = Vector3.ZERO
 var desk_spawn_ready: bool = false
@@ -115,18 +116,21 @@ func mark_desk_ready() -> void:
 func can_start_new_day() -> bool:
 	return completed_today
 
-func play_sound_once(sound_path: String, start_time: float = 0.0):
+func play_sound_once(sound_path: String, start_time: float = 0.0, volume_db: float = 0.0):
 	# Create an AudioStreamPlayer node
 	var player := AudioStreamPlayer.new()
 	
 	# Load the sound
 	player.stream = load(sound_path)
+	player.volume_db = volume_db
 	
 	# Add it as a child so it can play
 	add_child(player)
 	
 	# Play the sound
 	player.play(start_time)
+	
+	print("Playing sound: %s at time %.1f with volume %d dB" % [sound_path, start_time, volume_db])
 
 	# Connect to "finished" signal to remove it when done
 	player.finished.connect(func():

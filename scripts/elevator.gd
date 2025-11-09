@@ -44,7 +44,15 @@ func _ready() -> void:
 	_doors_open = false
 	_door_open_amount = 0.0
 	call_deferred("_update_door_positions")
-	GameState.play_sound_once("res://sound/Elevator sound.wav", 30.8)
+	
+	# Only play welcome sound on the very first spawn of the game
+	if GameState.is_first_spawn:
+		print("🔊 First spawn - playing welcome sound!")
+		GameState.play_sound_once("res://sound/welcome.wav", 0.0, 5.0)  # Play welcome.wav from the start, +5 dB louder
+		GameState.is_first_spawn = false
+	else:
+		print("Not first spawn - skipping welcome sound (day %d)" % GameState.current_day)
+	
 	# Open doors after 1 second
 	await get_tree().create_timer(1.0).timeout
 	open_doors()
