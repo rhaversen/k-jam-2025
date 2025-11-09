@@ -143,6 +143,9 @@ func _start_game() -> void:
 		_spawn_popup()
 	
 	print("🔥 Popup hell started! Close all popups in 30 seconds!")
+	
+	# Mark task complete when game starts (time-based game)
+	_mark_desk_task_complete()
 
 
 func _create_timer_display() -> void:

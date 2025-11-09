@@ -360,6 +360,9 @@ func _complete_game() -> void:
 	game_completed = true
 	print(" Game completed! All emails read!")
 	
+	# Mark task complete (non-time-based game)
+	_mark_desk_task_complete()
+	
 	# Update the welcome/instructions window with completion message
 	if not instructions_window or not is_instance_valid(instructions_window):
 		return

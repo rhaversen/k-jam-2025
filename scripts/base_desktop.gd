@@ -32,7 +32,7 @@ func _ready() -> void:
 	
 	# Create cursor last to ensure it's on top
 	_create_cursor()
-	_mark_desk_task_complete()
+	# Note: Task completion is handled by child classes based on game type
 
 
 # --- ENVIRONMENT SETUP ---
@@ -331,8 +331,9 @@ func _on_exit_computer_pressed() -> void:
 
 
 func _mark_desk_task_complete() -> void:
-	# Placeholder for future game state management
-	pass
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.mark_desk_ready()
+		print("Base Desktop: Marked desk task complete")
 
 
 # --- CLOCK SYSTEM ---

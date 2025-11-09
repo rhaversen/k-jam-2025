@@ -382,6 +382,9 @@ func _start_mission_countdown() -> void:
 	_update_stress_effects()
 	_play_tick()
 	_start_stress_drone()
+	
+	# Mark task complete when mission starts (time-based game)
+	_mark_desk_task_complete()
 
 
 func _on_mission_timer_timeout() -> void:
