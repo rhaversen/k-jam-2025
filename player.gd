@@ -62,6 +62,16 @@ func _physics_process(delta: float) -> void:
 		#else:
 			#stressed_2["blind"] = true
 	
+	if GameState.current_day > 1 || GameState.current_day == 1 && GameState.completed_today:
+		stressed_1["ground"] = true;
+	else: if GameState.current_day > 2 || GameState.current_day == 2 && GameState.completed_today:
+		pass
+	else: if GameState.current_day > 3 || GameState.current_day == 3 && GameState.completed_today:
+		stressed_1["camera"] = true;
+	else: if GameState.current_day > 4 || GameState.current_day == 4 && GameState.completed_today:
+		stressed_1["blind"] = true;
+		stressed_1["color"] = true;
+	
 	check_dict(delta, "color")
 	check_dict(delta, "blind")
 	check_dict(delta, "camera")
