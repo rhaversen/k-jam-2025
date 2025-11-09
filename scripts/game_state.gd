@@ -2,6 +2,8 @@ extends Node
 
 const SPAWN_ELEVATOR := "elevator"
 const SPAWN_DESK := "desk"
+const DISREPAIR_MIN_DAY := 1
+const DISREPAIR_MAX_DAY := 4
 
 var current_day: int = 1
 var is_first_spawn: bool = true
@@ -25,10 +27,12 @@ signal desk_task_flagged
 signal day_progressed(new_day: int)
 signal day_completed(day: int)
 signal minigame_started
+signal disrepair_level_changed(day: int, intensity: float)
 
 func _ready() -> void:
 	_setup_day_music()
 	_setup_minigame_music()
+	call_deferred("_notify_disrepair_change")
 
 func _setup_day_music() -> void:
 	_day_music_player = AudioStreamPlayer.new()
@@ -167,6 +171,8 @@ func start_new_day() -> bool:
 	if (current_day == 1):
 		print("Play sound")
 		play_sound_once("res://sound/Elevator 1.wav")
+
+	_notify_disrepair_change()
 	
 	return true
 
@@ -175,6 +181,7 @@ func reset_progress() -> void:
 	next_spawn_location = SPAWN_ELEVATOR
 	completed_today = false
 	clear_desk_spawn()
+	_notify_disrepair_change()
 
 func set_desk_spawn(position: Vector3, target: Vector3) -> void:
 	var forward := (target - position)
@@ -245,3 +252,12 @@ func set_minigame_schedule(schedule: Dictionary) -> void:
 		var path = schedule[day]
 		if path is String and path != "":
 			desk_minigame_map[day] = path
+
+func get_disrepair_intensity(day: int = current_day) -> float:
+	var span := maxf(1.0, float(DISREPAIR_MAX_DAY - DISREPAIR_MIN_DAY))
+	var normalized := (float(day) - float(DISREPAIR_MIN_DAY)) / span
+	return clampf(normalized, 0.0, 1.0)
+
+func _notify_disrepair_change() -> void:
+	var intensity := get_disrepair_intensity()
+	emit_signal("disrepair_level_changed", current_day, intensity)

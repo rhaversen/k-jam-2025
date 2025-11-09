@@ -20,6 +20,7 @@ const POSTER_TEXTURES := [
 
 var _built := false
 var _rng := RandomNumberGenerator.new()
+var _disrepair_factor: float = 0.0
 
 func setup(id_value: int, depth: float, thickness: float) -> void:
 	employee_id = id_value
@@ -33,6 +34,7 @@ func _ready() -> void:
 
 func _rebuild() -> void:
 	_clear_children()
+	_disrepair_factor = _get_disrepair_factor()
 	var seed: int = abs(int(hash(str(employee_id))))
 	if seed == 0:
 		seed = 1
@@ -291,6 +293,7 @@ func _rebuild() -> void:
 
 	coffee_surface.position = Vector3(0.0, 0.09, 0.0)
 	mug.add_child(coffee_surface)
+	_apply_mug_disrepair(mug, coffee_surface, _rng)
 
 	var keyboard_base := MeshInstance3D.new()
 	var kb_mesh := BoxMesh.new()
@@ -476,14 +479,20 @@ func _add_chair(parent: Node3D, desk_center_z: float, desk_depth: float, rng: Ra
 	base.name = "Base"
 	chair.add_child(base)
 
+	_apply_chair_disrepair(chair, rng)
+
 func _add_posters(parent: Node3D, depth: float, rng: RandomNumberGenerator) -> void:
 	var target_h := 0.8
 	var poster_z := -depth + 0.05
 
 	var available_textures: Array = POSTER_TEXTURES.duplicate()
 	var lateral_offsets := [-0.8, 0.8]
+	var spawn_probability: float = lerp(0.25, 0.45, _disrepair_factor)
+	var yaw_range: float = lerp(4.0, 25.0, _disrepair_factor)
+	var roll_range: float = lerp(0.0, 35.0, _disrepair_factor)
+	var pitch_range: float = lerp(0.0, 12.0, _disrepair_factor)
 	for index in range(lateral_offsets.size()):
-		if rng.randf() > 0.25:
+		if rng.randf() > spawn_probability:
 			continue
 		if available_textures.is_empty():
 			break
@@ -503,9 +512,68 @@ func _add_posters(parent: Node3D, depth: float, rng: RandomNumberGenerator) -> v
 		mesh.size = size
 		poster.mesh = mesh
 		poster.material_override = make_poster_material(texture_path, mesh.size)
-		poster.position = Vector3(lateral_offsets[index] + rng.randf_range(-0.05, 0.05), 0.4 + rng.randf_range(-0.05, 0.05), poster_z + rng.randf_range(-0.02, 0.02))
-		poster.rotation_degrees = Vector3(90.0, rng.randf_range(-4.0, 4.0), 0.0)
+		var position := Vector3(
+			lateral_offsets[index] + rng.randf_range(-0.05, 0.05),
+			0.4 + rng.randf_range(-0.05, 0.05),
+			poster_z + rng.randf_range(-0.02, 0.02)
+		)
+		if _disrepair_factor > 0.3 and rng.randf() < _disrepair_factor * 0.35:
+			position += Vector3(rng.randf_range(-0.18, 0.18), rng.randf_range(-0.3, 0.2), rng.randf_range(-0.08, 0.08))
+		poster.position = position
+		poster.rotation_degrees = Vector3(
+			90.0 + rng.randf_range(-pitch_range, pitch_range),
+			rng.randf_range(-yaw_range, yaw_range),
+			rng.randf_range(-roll_range, roll_range)
+		)
 		parent.add_child(poster)
+
+func _apply_chair_disrepair(chair: Node3D, rng: RandomNumberGenerator) -> void:
+	if chair == null or _disrepair_factor <= 0.01:
+		return
+	var topple_chance: float = lerp(0.0, 0.75, _disrepair_factor)
+	var slide_chance: float = lerp(0.0, 0.38, _disrepair_factor)
+	var wobble_chance: float = lerp(0.0, 0.35, _disrepair_factor)
+	var original_y := chair.position.y
+	if rng.randf() < topple_chance:
+		var axis := Vector3.FORWARD if rng.randf() < 0.5 else Vector3.RIGHT
+		var tilt_dir := 1.0 if rng.randf() < 0.5 else -1.0
+		chair.rotate(axis, deg_to_rad(rng.randf_range(75.0, 115.0)) * tilt_dir)
+		chair.position += Vector3(rng.randf_range(-0.6, 0.6), -0.35, rng.randf_range(-0.6, 0.6))
+		chair.position.y = min(chair.position.y, original_y - 0.3)
+		return
+	if rng.randf() < slide_chance:
+		chair.position += Vector3(rng.randf_range(-0.7, 0.7), 0.0, rng.randf_range(0.2, 0.9))
+		chair.rotate_y(deg_to_rad(rng.randf_range(-55.0, 55.0)))
+	if rng.randf() < wobble_chance:
+		chair.rotate_x(deg_to_rad(rng.randf_range(-18.0, 18.0)))
+		chair.rotate_z(deg_to_rad(rng.randf_range(-22.0, 22.0)))
+
+func _apply_mug_disrepair(mug: Node3D, coffee_surface: Node3D, rng: RandomNumberGenerator) -> void:
+	if mug == null or _disrepair_factor <= 0.01:
+		return
+	var flip_chance: float = lerp(0.0, 0.7, _disrepair_factor)
+	var spill_chance: float = lerp(0.0, 0.55, _disrepair_factor)
+	var roll := rng.randf()
+	if roll < flip_chance:
+		mug.rotate_x(deg_to_rad(180.0 + rng.randf_range(-20.0, 20.0)))
+		mug.rotate_z(deg_to_rad(rng.randf_range(-40.0, 40.0)))
+		mug.position += Vector3(rng.randf_range(-0.06, 0.06), 0.015, rng.randf_range(-0.06, 0.06))
+		if coffee_surface:
+			coffee_surface.visible = false
+		return
+	if roll < flip_chance + spill_chance:
+		var axis := Vector3.RIGHT if rng.randf() < 0.5 else Vector3.FORWARD
+		mug.rotate(axis, deg_to_rad(rng.randf_range(45.0, 110.0)))
+		mug.position += Vector3(rng.randf_range(-0.05, 0.05), 0.0, rng.randf_range(-0.05, 0.05))
+		if coffee_surface:
+			coffee_surface.visible = false
+	elif coffee_surface:
+		coffee_surface.visible = true
+
+func _get_disrepair_factor() -> float:
+	if typeof(GameState) == TYPE_NIL or not GameState:
+		return 0.0
+	return clampf(GameState.get_disrepair_intensity(), 0.0, 1.0)
 
 func _add_front_wall_id(front_wall: StaticBody3D, id_value: int, wall_size: Vector3) -> void:
 	if front_wall == null:

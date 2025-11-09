@@ -32,6 +32,8 @@ func _ready() -> void:
 	# Start day music when office loads (for day 1)
 	if typeof(GameState) != TYPE_NIL and GameState:
 		GameState.play_day_music()
+		if not GameState.disrepair_level_changed.is_connected(_on_game_state_disrepair_changed):
+			GameState.disrepair_level_changed.connect(_on_game_state_disrepair_changed)
 
 func _rebuild_office() -> void:
 	_clear_office()
@@ -183,3 +185,8 @@ func _play_return_camera_tween(player: Node3D) -> void:
 		if used_focus:
 			GameState.clear_desk_focus()
 	)
+
+func _on_game_state_disrepair_changed(day: int, intensity: float) -> void:
+	if not _is_ready:
+		return
+	_rebuild_office()

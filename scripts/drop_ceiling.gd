@@ -26,7 +26,12 @@ extends Node3D
 @export var enable_light_flicker: bool = true
 @export var light_energy_variation: float = 0.3
 
+var _rng := RandomNumberGenerator.new()
+var _disrepair_factor: float = 0.0
+
 func setup(total_length: float, total_depth: float, center_z: float) -> void:
+	_disrepair_factor = _get_disrepair_factor()
+	_seed_rng(total_length, total_depth, center_z)
 	_clear_children()
 	if total_length <= 0.0 or total_depth <= 0.0:
 		return
@@ -63,11 +68,15 @@ func _create_ceiling_grid(total_length: float, total_depth: float) -> void:
 	var max_x := total_length * 0.5
 	var min_z := -total_depth * 0.5
 	var max_z := total_depth * 0.5
+	var missing_tile_chance: float = lerp(0.0, 0.55, _disrepair_factor)
 	
 	var x := min_x + step_x * 0.5
 	while x < max_x:
 		var z := min_z + step_z * 0.5
 		while z < max_z:
+			if _disrepair_factor > 0.001 and _rng.randf() < missing_tile_chance:
+				z += step_z
+				continue
 			_spawn_ceiling_tile(Vector3(x, 0.0, z))
 			z += step_z
 		x += step_x
@@ -83,7 +92,23 @@ func _spawn_ceiling_tile(local_position: Vector3) -> void:
 	tile_mat.roughness = 0.8
 	tile.material_override = tile_mat
 	
-	tile.position = local_position + Vector3(0.0, tile_height - tile_thickness * 0.5, 0.0)
+	var position_jitter: float = lerp(0.0, 0.12, _disrepair_factor)
+	var base_position := local_position + Vector3(0.0, tile_height - tile_thickness * 0.5, 0.0)
+	if position_jitter > 0.0:
+		base_position += Vector3(
+			_rng.randf_range(-position_jitter, position_jitter),
+			_rng.randf_range(-position_jitter * 0.5, position_jitter * 0.5),
+			_rng.randf_range(-position_jitter, position_jitter)
+		)
+	tile.position = base_position
+	var tilt_range: float = lerp(0.0, 12.0, _disrepair_factor)
+	if tilt_range > 0.0:
+		tile.rotation_degrees = Vector3(
+			_rng.randf_range(-tilt_range, tilt_range),
+			_rng.randf_range(-tilt_range * 0.25, tilt_range * 0.25),
+			_rng.randf_range(-tilt_range, tilt_range)
+		)
+	
 	add_child(tile)
 
 func _create_lights(total_length: float, total_depth: float) -> void:
@@ -94,6 +119,7 @@ func _create_lights(total_length: float, total_depth: float) -> void:
 	var max_x := total_length * 0.5
 	var min_z := -total_depth * 0.5
 	var max_z := total_depth * 0.5
+	var missing_fixture_chance: float = lerp(0.0, 0.3, _disrepair_factor)
 	
 	var epsilon := 0.001
 	var x_positions: Array[float] = []
@@ -116,11 +142,25 @@ func _create_lights(total_length: float, total_depth: float) -> void:
 	
 	for x_pos in x_positions:
 		for z_pos in z_positions:
+			if _disrepair_factor > 0.001 and _rng.randf() < missing_fixture_chance:
+				continue
 			_spawn_fixture(Vector3(x_pos, light_height, z_pos))
 
 func _spawn_fixture(local_position: Vector3) -> void:
 	var fixture := Node3D.new()
 	fixture.position = local_position
+	if _disrepair_factor > 0.05:
+		var tilt: float = lerp(0.0, 9.0, _disrepair_factor)
+		fixture.rotation_degrees = Vector3(
+			_rng.randf_range(-tilt, tilt),
+			_rng.randf_range(-tilt * 0.2, tilt * 0.2),
+			_rng.randf_range(-tilt, tilt)
+		)
+		fixture.position += Vector3(
+			_rng.randf_range(-0.08, 0.08) * _disrepair_factor,
+			_rng.randf_range(-0.15, 0.0) * _disrepair_factor,
+			_rng.randf_range(-0.08, 0.08) * _disrepair_factor
+		)
 	add_child(fixture)
 
 	var housing_height: float = 0.05
@@ -204,7 +244,9 @@ func _spawn_fixture(local_position: Vector3) -> void:
 	spot_light.light_color = light_color
 	
 	# Randomize light energy for variation (some lights dimmer/brighter)
-	var energy_multiplier: float = 1.0 + randf_range(-light_energy_variation, light_energy_variation)
+	var energy_variation: float = lerp(light_energy_variation, light_energy_variation * 3.5, _disrepair_factor)
+	var energy_multiplier: float = 1.0 + _rng.randf_range(-energy_variation, energy_variation)
+	energy_multiplier = max(0.1, energy_multiplier)
 	spot_light.light_energy = light_energy * energy_multiplier
 	
 	spot_light.spot_range = light_range
@@ -220,14 +262,16 @@ func _spawn_fixture(local_position: Vector3) -> void:
 	fixture.add_child(spot_light)
 	
 	# Add flicker script to all lights for dynamic effect
-	if enable_light_flicker:
-		var flicker_script = load("res://cubical_light.gd")
-		var flicker_node = Node.new()
-		flicker_node.set_script(flicker_script)
-		flicker_node.set("flicker_interval", randf_range(0.02, 0.05))
-		flicker_node.set("flicker_weight", randf_range(0.03, 0.08))
-		flicker_node.set("base_energy", spot_light.light_energy)
-		spot_light.add_child(flicker_node)
+	if enable_light_flicker and _disrepair_factor > 0.001:
+		var flicker_script := load("res://cubical_light.gd")
+		if flicker_script:
+			var flicker_node: Node = flicker_script.new()
+			flicker_node.set("base_energy", spot_light.light_energy)
+			flicker_node.set("flicker_interval", float(lerp(0.03, 0.008, _disrepair_factor)))
+			flicker_node.set("flicker_weight", float(lerp(0.05, 0.45, _disrepair_factor)))
+			if flicker_node.has_method("set_disrepair_factor"):
+				flicker_node.call("set_disrepair_factor", _disrepair_factor)
+			spot_light.add_child(flicker_node)
 	
 	# Add vertical rods at each end of the fixture
 	var rod_offset_x := light_fixture_size.x * 0.5 - rod_thickness
@@ -252,3 +296,21 @@ func _spawn_rod(parent: Node3D, local_position: Vector3) -> void:
 	# The casing top is at y=0.01, so start the rod there
 	rod.position = local_position + Vector3(0.0, 0.01 + rod_height * 0.5, 0.0)
 	parent.add_child(rod)
+
+func _get_disrepair_factor() -> float:
+	var factor := 0.0
+	if typeof(GameState) != TYPE_NIL and GameState:
+		factor = GameState.get_disrepair_intensity()
+	return clampf(factor, 0.0, 1.0)
+
+func _seed_rng(total_length: float, total_depth: float, center_z: float) -> void:
+	if _rng == null:
+		_rng = RandomNumberGenerator.new()
+	var day := 1
+	if typeof(GameState) != TYPE_NIL and GameState:
+		day = GameState.current_day
+	var seed_str := "%0.2f|%0.2f|%0.2f|%d" % [total_length, total_depth, center_z, day]
+	var hashed: int = abs(int(hash(seed_str)))
+	if hashed == 0:
+		hashed = 1
+	_rng.seed = hashed
