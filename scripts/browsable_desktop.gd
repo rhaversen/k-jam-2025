@@ -314,6 +314,12 @@ func _on_folder_opened(folder_name: String, content: Variant) -> void:
 
 	add_child(window)
 	open_windows[folder_name] = window
+	
+	# Clean up the reference when window is closed/freed
+	window.tree_exiting.connect(func():
+		if open_windows.has(folder_name):
+			open_windows.erase(folder_name)
+	)
 
 
 func _create_window_folder_icon(name: String, content: Variant) -> Control:

@@ -659,7 +659,11 @@ func _on_folder_opened(folder_name: String, content: Variant) -> void:
 		return
 
 	if open_windows.has(folder_name):
-		bring_to_front(open_windows[folder_name])
+		var existing_window: PanelContainer = open_windows[folder_name]
+		if existing_window and is_instance_valid(existing_window):
+			bring_to_front(existing_window)
+		else:
+			open_windows.erase(folder_name)
 		return
 
 	var window := create_window(
@@ -699,6 +703,12 @@ func _on_folder_opened(folder_name: String, content: Variant) -> void:
 
 	add_child(window)
 	open_windows[folder_name] = window
+	
+	# Clean up the reference when window is closed/freed
+	window.tree_exiting.connect(func():
+		if open_windows.has(folder_name):
+			open_windows.erase(folder_name)
+	)
 
 
 func _create_window_folder_icon(name: String, content: Variant) -> Control:

@@ -245,6 +245,12 @@ func _on_mark_email_read(email: Dictionary, email_window: PanelContainer, email_
 	if email.read:
 		return  # Already read
 	
+	# Validate windows are still valid
+	if not email_window or not is_instance_valid(email_window):
+		return
+	if not inbox_window or not is_instance_valid(inbox_window):
+		return
+	
 	# Mark as read
 	email.read = true
 	unread_emails.erase(email.id)
