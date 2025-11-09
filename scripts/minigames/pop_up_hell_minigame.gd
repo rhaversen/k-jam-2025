@@ -1,4 +1,4 @@
-extends "res://scripts/base_desktop.gd"
+extends "res://scripts/ui/base_desktop.gd"
 # Popup Hell Mini-Game: Close all the popup windows as fast as you can!
 
 var popup_windows: Array = []
@@ -551,7 +551,6 @@ func _cut_to_black_and_return_to_office() -> void:
 	
 	# Return to office scene
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	const EXIT_SCENE_PATH := "res://node_3d.tscn"
 	
 	# Set spawn location to desk after exiting computer
 	if typeof(GameState) != TYPE_NIL and GameState:

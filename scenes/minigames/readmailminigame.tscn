@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c3pvfhrsv5xdl"]
 
-[ext_resource type="Script" uid="uid://x4vl06ie51uc" path="res://scripts/read_mail_minigame.gd" id="1_j8x6g"]
+[ext_resource type="Script" uid="uid://x4vl06ie51uc" path="res://scripts/minigames/read_mail_minigame.gd" id="1_j8x6g"]
 
 [node name="Readmailminigame" type="Node2D"]
 script = ExtResource("1_j8x6g")

@@ -1,4 +1,4 @@
-extends "res://scripts/base_desktop.gd"
+extends "res://scripts/ui/base_desktop.gd"
 # Folder race mini-game: Find and send the target file before time runs out
 
 const TARGET_FILE := "Wells_Report.docx"

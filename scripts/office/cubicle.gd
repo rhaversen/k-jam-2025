@@ -186,7 +186,7 @@ func _rebuild() -> void:
 		screen.add_child(screen_light)
 
 		# Add monitor flicker script to screen - it will control both emission and light
-		var flicker_script = load("res://scripts/monitor_flicker.gd")
+		var flicker_script = load("res://scripts/office/monitor_flicker.gd")
 		screen.set_script(flicker_script)
 		screen.set("base_light_energy", 0.6)
 

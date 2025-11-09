@@ -60,14 +60,14 @@ func get_mode_name() -> String:
 func _mode_to_script_path(mode: DesktopMode) -> String:
 	match mode:
 		DesktopMode.BROWSABLE:
-			return "res://scripts/browsable_desktop.gd"
+			return "res://scripts/ui/browsable_desktop.gd"
 		DesktopMode.READ_MAIL_GAME:
-			return "res://scripts/read_mail_minigame.gd"
+			return "res://scripts/minigames/read_mail_minigame.gd"
 		DesktopMode.FOLDER_RACE_GAME:
-			return "res://scripts/folder_race_minigame.gd"
+			return "res://scripts/minigames/folder_race_minigame.gd"
 		DesktopMode.ORGANIZE_FILES_GAME:
-			return "res://scripts/organize_files_minigame.gd"
+			return "res://scripts/minigames/organize_files_minigame.gd"
 		DesktopMode.POPUP_HELL_GAME:
-			return "res://scripts/pop_up_hell_minigame.gd"
+			return "res://scripts/minigames/pop_up_hell_minigame.gd"
 		_:
-			return "res://scripts/browsable_desktop.gd"
+			return "res://scripts/ui/browsable_desktop.gd"

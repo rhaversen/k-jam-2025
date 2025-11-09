@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://4pqund3nukl7"]
 
-[ext_resource type="Script" uid="uid://5d46w2ol3glc" path="res://scripts/boot_screen.gd" id="1_01two"]
+[ext_resource type="Script" uid="uid://5d46w2ol3glc" path="res://scripts/ui/boot_screen.gd" id="1_01two"]
 
 [node name="BootScreen" type="Control"]
 script = ExtResource("1_01two")

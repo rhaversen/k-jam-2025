@@ -6,7 +6,7 @@ const WALL_EAST := "east"
 const WALL_SOUTH := "south"
 const WALL_WEST := "west"
 
-const WINDOW_CONTROLLER_SCRIPT := preload("res://scripts/window_day_night_controller.gd")
+const WINDOW_CONTROLLER_SCRIPT := preload("res://scripts/office/window_day_night_controller.gd")
 const WINDOW_DAY_COLOR := Color(0.75, 0.85, 1.0)
 const WINDOW_DAY_EMISSION := 3.8
 const WINDOW_NIGHT_COLOR := Color(0.08, 0.1, 0.22)

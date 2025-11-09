@@ -2,7 +2,7 @@ extends Node
 
 func load_day(day: int) -> void:
 	print("Making map")
-	var main = preload("res://node_3d.tscn")
+	var main = preload("res://scenes/node_3d.tscn")
 	var level_scene = main.instantiate() as Node3D
 	level_scene.is_task_solved = false
 	level_scene.day = day   

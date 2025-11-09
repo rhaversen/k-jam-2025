@@ -1,4 +1,4 @@
-extends "res://scripts/browsable_desktop.gd"
+extends "res://scripts/ui/browsable_desktop.gd"
 # Read Mail Mini-Game: Read all emails from your coworkers to complete the game
 
 # Email data structure for each contact

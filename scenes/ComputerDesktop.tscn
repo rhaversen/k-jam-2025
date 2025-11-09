@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bmv6lktqt7foj"]
 
-[ext_resource type="Script" path="res://scripts/dynamic_desktop_loader.gd" id="1_ks0ts"]
+[ext_resource type="Script" uid="uid://cmvfn2eng8rog" path="res://scripts/ui/dynamic_desktop_loader.gd" id="1_ks0ts"]
 
 [node name="ComputerDesktop" type="Control"]
 layout_mode = 3

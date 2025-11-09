@@ -1,11 +1,11 @@
 extends Node3D
 # High-level office builder that spawns cubicle rows and shared lighting.
 
-const DropCeiling := preload("res://scripts/drop_ceiling.gd")
-const Cubicle := preload("res://scripts/cubicle.gd")
-const Elevator := preload("res://scripts/elevator.gd")
-const OfficeLayoutBuilderScript := preload("res://scripts/office_layout_builder.gd")
-const OfficePerimeterBuilderScript := preload("res://scripts/office_perimeter_builder.gd")
+const DropCeiling := preload("res://scripts/office/drop_ceiling.gd")
+const Cubicle := preload("res://scripts/office/cubicle.gd")
+const Elevator := preload("res://scripts/office/elevator.gd")
+const OfficeLayoutBuilderScript := preload("res://scripts/office/office_layout_builder.gd")
+const OfficePerimeterBuilderScript := preload("res://scripts/office/office_perimeter_builder.gd")
 const ELEVATOR_WALL_NORTH := "north"
 const ELEVATOR_WALL_EAST := "east"
 const ELEVATOR_WALL_SOUTH := "south"

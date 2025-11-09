@@ -2,7 +2,7 @@ extends Control
 # Base desktop environment with UI elements, windows, and cursor
 # Can be extended for specific applications/mini-games
 
-const EXIT_SCENE_PATH := "res://node_3d.tscn"
+const EXIT_SCENE_PATH := "res://scenes/node_3d.tscn"
 
 var cursor: Sprite2D
 var desktop_container: Control

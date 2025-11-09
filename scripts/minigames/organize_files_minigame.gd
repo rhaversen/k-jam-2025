@@ -1,4 +1,4 @@
-extends "res://scripts/browsable_desktop.gd"
+extends "res://scripts/ui/browsable_desktop.gd"
 # Organize Files Mini-Game: Clean up the desktop by moving files into folders
 
 var loose_files: Array = []  # Files that need to be organized

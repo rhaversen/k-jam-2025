@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://e2blmj73b0p5"]
 
-[ext_resource type="Script" uid="uid://d38a723yx0so6" path="res://scripts/map_loader.gd" id="1_4a5m4"]
+[ext_resource type="Script" uid="uid://d38a723yx0so6" path="res://scripts/core/map_loader.gd" id="1_4a5m4"]
 
 [node name="MapLoader" type="Node"]
 script = ExtResource("1_4a5m4")

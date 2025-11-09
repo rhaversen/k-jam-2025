@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://4pp0rjfvdr8r"]
 
-[ext_resource type="Script" uid="uid://b2b05xi4vbccn" path="res://scripts/pop_up_hell_minigame.gd" id="1_ub5jn"]
+[ext_resource type="Script" uid="uid://b2b05xi4vbccn" path="res://scripts/minigames/pop_up_hell_minigame.gd" id="1_ub5jn"]
 
 [node name="Popuphellminigame" type="Node2D"]
 script = ExtResource("1_ub5jn")

@@ -1,4 +1,4 @@
-extends "res://scripts/base_desktop.gd"
+extends "res://scripts/ui/base_desktop.gd"
 # Desktop with mail, notes, and browsable folders - but no mini-game mechanics
 
 var folder_tree: Dictionary
