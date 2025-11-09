@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 		#else:
 			#stressed_2["blind"] = true
 	
-	var current_day = GameState.current_day;
+	var current_day = GameState.current_day-1;
 	if GameState.completed_today:
 		current_day += 1;
 	

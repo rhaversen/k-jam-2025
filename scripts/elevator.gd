@@ -43,6 +43,8 @@ func _ready() -> void:
 	# Start with doors closed
 	_doors_open = false
 	_door_open_amount = 0.0
+	GameState.play_sound_once("res://sound/Elevator sound.wav", 30.8-3.0)
+	await get_tree().create_timer(3.0).timeout
 	call_deferred("_update_door_positions")
 	
 	# Only play welcome sound on the very first spawn of the game
@@ -398,9 +400,7 @@ func _attempt_start_new_day() -> void:
 		return
 	if GameState.start_new_day():
 		close_doors()
-		print("Elevator departing for day %d." % GameState.current_day)
-		GameState.play_sound_segment_3d("res://sound/Elevator sound.wav", _elevator_car.position, 30.8)
-
+		GameState.play_sound_segment_3d("res://sound/Elevator sound.wav", _elevator_car.position, 30.8-10.0)
 		if (GameState.current_day == 2):
 			print("Play sound 1")
 			GameState.play_sound_once("res://sound/Elevator 1.wav")
@@ -408,6 +408,9 @@ func _attempt_start_new_day() -> void:
 		if (GameState.current_day == 3):
 			print("Play sound 2")
 			GameState.play_sound_once("res://sound/Elevator 2.wav")
+		await get_tree().create_timer(10.0).timeout
+		print("Elevator departing for day %d." % GameState.current_day)
+
 
 		_set_button_enabled(false)
 		_set_crosshair(false, false)
