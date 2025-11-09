@@ -13,6 +13,10 @@ var instructions_window: PanelContainer = null
 func _ready() -> void:
 	super._ready()  # Call browsable desktop setup
 	
+	# Set clock to run from 8:00 to 16:00 (8 hours) over estimated task duration
+	# Assuming ~2-3 minutes to read all emails
+	set_clock_parameters(8, 16, 150.0)  # 150 seconds = 2.5 minutes
+	
 	# Generate emails for each contact
 	_generate_emails()
 	_update_mail_contacts_with_unread_count()

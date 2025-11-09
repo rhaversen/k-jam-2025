@@ -21,6 +21,9 @@ var mail_window_default_size: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
 	
+	# Set clock to run from 8:00 to 16:00 slowly (for casual browsing)
+	set_clock_parameters(8, 16, 300.0)  # 5 minutes for a full workday
+	
 	# Add mail and notes windows
 	_create_mail_window()
 	_create_notes_window()
@@ -269,7 +272,7 @@ func _on_folder_opened(folder_name: String, content: Variant) -> void:
 		return
 
 	if open_windows.has(folder_name):
-		var existing_window := open_windows[folder_name]
+		var existing_window: PanelContainer = open_windows[folder_name]
 		if existing_window and is_instance_valid(existing_window):
 			bring_to_front(existing_window)
 		else:

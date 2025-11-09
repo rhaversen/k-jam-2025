@@ -56,6 +56,10 @@ var mail_window_default_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
+	
+	# Set clock to run from 8:00 to 20:00 (12 hours) over the mission duration
+	set_clock_parameters(8, 20, MISSION_DURATION_SECONDS)
+	
 	_hide_exit_button()
 	
 	# Setup mini-game specific UI
@@ -89,13 +93,13 @@ func _process(delta: float) -> void:
 	
 	# Mini-game specific processing
 	if stress_overlay and is_instance_valid(stress_overlay) and stress_overlay.visible:
-		var base_alpha: float = lerp(0.0, 0.65, stress_intensity)
+		var base_alpha: float = lerp(0.0, 0.25, stress_intensity)  # Reduced from 0.65
 		if countdown_remaining <= 10 and mission_started:
-			base_alpha = max(base_alpha, 0.5)
-		var pulse_speed: float = 110.0 if countdown_remaining <= 10 else 180.0
-		var pulse_strength: float = 0.11 if countdown_remaining <= 10 else 0.06
+			base_alpha = max(base_alpha, 0.35)  # Reduced from 0.5
+		var pulse_speed: float = 150.0 if countdown_remaining <= 10 else 220.0  # Slower pulse
+		var pulse_strength: float = 0.04 if countdown_remaining <= 10 else 0.02  # Reduced pulse strength
 		var pulse: float = pulse_strength * sin(float(Time.get_ticks_msec()) / pulse_speed)
-		var alpha: float = clamp(base_alpha + pulse, 0.0, 0.7)
+		var alpha: float = clamp(base_alpha + pulse, 0.0, 0.4)  # Reduced max from 0.7
 		stress_overlay.color = Color(0.9, 0.1, 0.1, alpha)
 
 	if mail_window and is_instance_valid(mail_window) and mail_window_default_size != Vector2.ZERO:

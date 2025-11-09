@@ -6,6 +6,11 @@ const EXIT_SCENE_PATH := "res://node_3d.tscn"
 
 var cursor: Sprite2D
 var desktop_container: Control
+var time_label: Label
+var clock_start_hour: int = 8
+var clock_end_hour: int = 16
+var clock_current_time: float = 0.0  # In minutes (8:00 = 0, 16:00 = 480)
+var clock_duration: float = 480.0  # Total minutes to simulate (8 hours = 480 minutes)
 
 
 func _ready() -> void:
@@ -61,8 +66,9 @@ func _create_top_bar() -> void:
 	apps_label.add_theme_color_override("font_color", Color(0.7, 0.9, 1))
 	top_bar.add_child(apps_label)
 
-	var time_label := Label.new()
-	time_label.text = "08:22"
+	time_label = Label.new()
+	time_label.name = "TimeLabel"
+	time_label.text = "08:00"
 	time_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.8))
 	time_label.position = Vector2(get_viewport_rect().size.x - 80, 10)
 	top_bar.add_child(time_label)
@@ -230,7 +236,7 @@ func _create_cursor() -> void:
 		cursor_tex = load(texture_path) as Texture2D
 	if cursor_tex:
 		cursor.texture = cursor_tex
-		cursor.scale = Vector2(0.5, 0.5)
+		cursor.scale = Vector2(0.02, 0.02)
 	else:
 		# Create a default cursor if texture fails to load
 		var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
@@ -252,6 +258,9 @@ func _process(delta: float) -> void:
 		# Ensure cursor stays on top
 		if cursor.get_index() != get_child_count() - 1:
 			move_child(cursor, get_child_count() - 1)
+	
+	# Update clock
+	_update_clock(delta)
 
 
 func _create_exit_button() -> void:
@@ -312,7 +321,54 @@ func _on_exit_computer_pressed() -> void:
 
 
 func _mark_desk_task_complete() -> void:
-	if typeof(GameState) == TYPE_NIL or GameState == null:
+	# Placeholder for future game state management
+	pass
+
+
+# --- CLOCK SYSTEM ---
+
+func set_clock_parameters(start_hour: int, end_hour: int, task_duration_seconds: float) -> void:
+	"""Set the clock to run from start_hour to end_hour over the task duration"""
+	clock_start_hour = start_hour
+	clock_end_hour = end_hour
+	clock_current_time = 0.0
+	
+	# Calculate total minutes to simulate
+	var hours_to_simulate := end_hour - start_hour
+	clock_duration = hours_to_simulate * 60.0  # Convert to minutes
+	
+	# Set initial time display
+	_update_clock_display()
+
+
+func _update_clock(delta: float) -> void:
+	if not time_label or not is_instance_valid(time_label):
 		return
-	GameState.mark_desk_ready()
-	GameState.set_next_spawn(GameState.SPAWN_DESK)
+	
+	# Progress clock based on delta time
+	# We want clock_duration minutes to pass over the task duration
+	# Assuming average task is 60 seconds, we scale appropriately
+	var time_scale := clock_duration / 60.0  # How many in-game minutes per real second
+	clock_current_time += delta * time_scale
+	
+	# Clamp to max duration
+	if clock_current_time > clock_duration:
+		clock_current_time = clock_duration
+	
+	_update_clock_display()
+
+
+func _update_clock_display() -> void:
+	if not time_label or not is_instance_valid(time_label):
+		return
+	
+	# Convert current time to hours and minutes
+	var total_minutes := int(clock_current_time)
+	var hours := clock_start_hour + (total_minutes / 60)
+	var minutes := total_minutes % 60
+	
+	# Round minutes to nearest 5
+	minutes = int(minutes / 5) * 5
+	
+	# Format as HH:MM
+	time_label.text = "%02d:%02d" % [hours, minutes]
