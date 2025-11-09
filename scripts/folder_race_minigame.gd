@@ -4,7 +4,6 @@ extends "res://scripts/base_desktop.gd"
 const TARGET_FILE := "Wells_Report.docx"
 const TARGET_PATH := ["Projects", "Client_Phoenix", "Quarterly", "Drafts"]
 const MAX_FOLDERS := 67
-const FAIL_SCENE_PATH := "res://scenes/folderfail.tscn"
 const FAIL_FADE_DURATION := 1.25
 const FAIL_OVERLAY_BASE_COLOR := Color(0.95, 0.0, 0.0, 0.65)
 const FAIL_OVERLAY_FINAL_COLOR := Color(0.95, 0.0, 0.0, 1.0)
@@ -39,8 +38,10 @@ var fail_overlay: ColorRect
 var fail_sequence_started: bool = false
 var fail_fade_active: bool = false
 var fail_fade_elapsed: float = 0.0
-var fail_scene_change_triggered: bool = false
+var fail_return_started: bool = false
 var fail_delay_timer: SceneTreeTimer
+var success_return_scheduled: bool = false
+var success_window: PanelContainer
 
 # Store mail states
 var coworkers: Array = [
@@ -55,6 +56,7 @@ var mail_window_default_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
+	_hide_exit_button()
 	
 	# Setup mini-game specific UI
 	_create_mail_window()
@@ -111,15 +113,10 @@ func _process(delta: float) -> void:
 		var eased_t: float = smoothstep(0.0, 1.0, t)
 		if fail_overlay and is_instance_valid(fail_overlay):
 			fail_overlay.color = FAIL_OVERLAY_BASE_COLOR.lerp(FAIL_OVERLAY_FINAL_COLOR, eased_t)
-		if t >= 1.0:
+		if t >= 1.0 and not fail_return_started:
 			fail_fade_active = false
-			if not fail_scene_change_triggered:
-				fail_scene_change_triggered = true
-				var tree: SceneTree = get_tree()
-				if tree:
-					var result: Error = tree.change_scene_to_file(FAIL_SCENE_PATH)
-					if result != OK:
-						push_error("Failed to change to fail scene: %s" % FAIL_SCENE_PATH)
+			fail_return_started = true
+			call_deferred("_begin_failure_return")
 
 	shake_timer += delta
 	var target_shake: float = 0.0
@@ -274,6 +271,11 @@ func _trigger_new_mail() -> void:
 				mission_timer.stop()
 			_close_send_prompt()
 			_stop_tick()
+			success_return_scheduled = false
+			if success_window and is_instance_valid(success_window):
+				success_window.queue_free()
+			success_window = null
+			_hide_exit_button()
 			break
 
 
@@ -408,6 +410,7 @@ func _complete_mission(success: bool) -> void:
 	if success:
 		mail_message_base_text = ""
 		_play_success_heart_audio()
+		_handle_mission_success()
 	else:
 		_handle_mission_failure()
 
@@ -416,8 +419,96 @@ func _handle_mission_failure() -> void:
 	_close_send_prompt()
 	mail_message_base_text = ""
 	_stop_tick()
+	_hide_exit_button()
 	_show_mail_message("[b]From:[/b] Alex Pendell\n[b]Subject:[/b] Escalating to management\n\nYou missed the deadline. I'm looping in our boss. We'll talk about this later.")
 	_start_fail_sequence()
+
+
+func _handle_mission_success() -> void:
+	_hide_exit_button()
+	_show_success_window()
+	_schedule_success_return()
+
+
+func _show_success_window() -> void:
+	if success_window and is_instance_valid(success_window):
+		success_window.queue_free()
+	success_window = null
+
+	var base_position := Vector2(get_viewport_rect().size.x / 2 - 240, get_viewport_rect().size.y / 2 - 140)
+	success_window = create_window("Report Sent", base_position, Vector2(480, 280), true)
+	success_window.set_meta("shake_last_offset", Vector2.ZERO)
+	success_window.set_meta("shake_phase", randf() * TAU)
+
+	var content_area := find_child_by_name(success_window, "content")
+	if not content_area:
+		content_area = success_window
+
+	for child in content_area.get_children():
+		child.queue_free()
+
+	var completion_text := "[b][color=green]Report Delivered![/color][/b]\n\n"
+	completion_text += "You located the [color=yellow]%s[/color] in time.\n" % TARGET_FILE
+	completion_text += "Alex is sending it up the chain right now."
+
+	var completion_label := RichTextLabel.new()
+	completion_label.bbcode_enabled = true
+	completion_label.text = completion_text
+	completion_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	completion_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	completion_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+	completion_label.add_theme_font_size_override("font_size", 16)
+	completion_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_area.add_child(completion_label)
+
+	add_child(success_window)
+	bring_to_front(success_window)
+
+
+func _schedule_success_return() -> void:
+	if success_return_scheduled:
+		return
+	success_return_scheduled = true
+	var timer := get_tree().create_timer(2.5)
+	timer.timeout.connect(Callable(self, "_begin_success_return"))
+
+
+func _begin_success_return() -> void:
+	if not mission_completed or mission_failed:
+		return
+	await _fade_to_black_and_exit()
+
+
+func _begin_failure_return() -> void:
+	if not mission_failed:
+		return
+	await get_tree().create_timer(0.4).timeout
+	await _fade_to_black_and_exit()
+
+
+func _fade_to_black_and_exit() -> void:
+	var overlay := ColorRect.new()
+	overlay.name = "ReturnFadeOverlay"
+	overlay.color = Color(0, 0, 0, 0)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = RenderingServer.CANVAS_ITEM_Z_MAX
+	add_child(overlay)
+
+	var tween := create_tween()
+	tween.tween_property(overlay, "color", Color(0, 0, 0, 1), 0.6)
+
+	await tween.finished
+	await get_tree().create_timer(0.4).timeout
+
+	if success_window and is_instance_valid(success_window):
+		success_window.queue_free()
+	success_window = null
+
+	if success_heart_player and is_instance_valid(success_heart_player):
+		success_heart_player.stop()
+
+	super._on_exit_computer_pressed()
 
 
 # --- FOLDER SYSTEM ---
@@ -1060,7 +1151,7 @@ func _start_fail_sequence() -> void:
 	fail_sequence_started = true
 	fail_fade_active = false
 	fail_fade_elapsed = 0.0
-	fail_scene_change_triggered = false
+	fail_return_started = false
 	var fade_callable := Callable(self, "_begin_fail_fade")
 	if fail_delay_timer and is_instance_valid(fail_delay_timer):
 		if fail_delay_timer.timeout.is_connected(fade_callable):
@@ -1093,7 +1184,7 @@ func _reset_fail_state() -> void:
 	fail_sequence_started = false
 	fail_fade_active = false
 	fail_fade_elapsed = 0.0
-	fail_scene_change_triggered = false
+	fail_return_started = false
 	if fail_overlay and is_instance_valid(fail_overlay):
 		fail_overlay.visible = false
 		fail_overlay.color = Color(FAIL_OVERLAY_BASE_COLOR.r, FAIL_OVERLAY_BASE_COLOR.g, FAIL_OVERLAY_BASE_COLOR.b, 0.0)
@@ -1150,8 +1241,24 @@ func _has_folder_icon(node: Node) -> bool:
 	return false
 
 
+func _hide_exit_button() -> void:
+	var exit_button := get_node_or_null("ExitComputerButton") as Button
+	if exit_button:
+		exit_button.disabled = true
+		exit_button.visible = false
+
+
+func _show_exit_button() -> void:
+	var exit_button := get_node_or_null("ExitComputerButton") as Button
+	if exit_button:
+		exit_button.disabled = false
+		exit_button.visible = true
+
+
 # Override base exit to handle mission cleanup
 func _on_exit_computer_pressed() -> void:
+	if not (mission_completed or mission_failed):
+		return
 	if mission_timer and not mission_timer.is_stopped():
 		mission_timer.stop()
 	_stop_tick()
