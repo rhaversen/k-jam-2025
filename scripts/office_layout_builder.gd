@@ -161,13 +161,13 @@ func _place_cubicle(cubicle: Node3D, target_center: Vector3) -> void:
 	cubicle.position = Vector3(target_center.x - center_x, 0.0, target_center.z - center_z)
 
 	if cubicle.employee_id == 10:
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").position = cubicle.position # .transform.origin.x = 0
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").camera_target_position = cubicle.position # .transform.origin.x = 0
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").camera_target_position.y += 3.15
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").camera_target_position.x -= 1
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").camera_target_position.z += 0
+		cubicle.get_tree().root.get_node("./Main/Area3D").position = cubicle.position # .transform.origin.x = 0
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position = cubicle.position # .transform.origin.x = 0
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.y += 3.15
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.x -= 1
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.z += 0
 
-		cubicle.get_tree().root.get_node("./MapLoader/Main/Area3D").camera_target_rotation = -Vector3(0.0, 0.0, 0.0);
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_rotation = -Vector3(0.0, 0.0, 0.0);
 		# scubicle.get_tree().root.get_node("./Main/Orb").position = cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position;
 
 		# .camera_target_position

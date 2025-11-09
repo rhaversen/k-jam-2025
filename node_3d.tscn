@@ -1,9 +1,8 @@
-[gd_scene load_steps=28 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=25 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
 [ext_resource type="Script" uid="uid://cfufnjs54lguo" path="res://cubical_sound_script.gd" id="1_wc5p8"]
-[ext_resource type="Script" uid="uid://b74aq41vgfphe" path="res://node_3d.gd" id="1_wlxy5"]
 [ext_resource type="Script" uid="uid://b6lbfrmriyl0d" path="res://player_camera.gd" id="2_a0tk4"]
 [ext_resource type="Script" uid="uid://dl2grq3dproqn" path="res://scripts/floor_mesh.gd" id="2_cdqbm"]
 [ext_resource type="Script" uid="uid://csujpnt82ita5" path="res://scripts/office.gd" id="3_a0tk4"]
@@ -14,7 +13,6 @@
 [ext_resource type="Shader" uid="uid://cw701dh2kkbyp" path="res://shader/camera_blind_shader.gdshader" id="11_imku0"]
 [ext_resource type="Script" uid="uid://dn1dnjfnyvkkb" path="res://scripts/camera_shader_mesh.gd" id="11_tereu"]
 [ext_resource type="Script" uid="uid://3ywrxnlpk8ke" path="res://scripts/camera_blind_shader_mesh.gd" id="12_wlxy5"]
-[ext_resource type="Script" uid="uid://dq5ems4mjpxmq" path="res://area_3d_elevator.gd" id="15_3v7ru"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_noarx"]
 size = Vector3(120, 2, 60)
@@ -72,11 +70,7 @@ shader_parameter/blind = 0.0
 [sub_resource type="SphereMesh" id="SphereMesh_cdqbm"]
 material = SubResource("ShaderMaterial_tereu")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_wlxy5"]
-size = Vector3(5, 5, 5)
-
 [node name="Main" type="Node3D"]
-script = ExtResource("1_wlxy5")
 
 [node name="Map" type="Node3D" parent="."]
 
@@ -133,6 +127,7 @@ script = ExtResource("3_a0tk4")
 [node name="Area3D" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
 script = ExtResource("9_4arys")
+marks_task_ready = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
 shape = SubResource("BoxShape3D_4arys")
@@ -156,10 +151,3 @@ script = ExtResource("11_tereu")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
 visible = false
 mesh = SubResource("SphereMesh_cdqbm")
-
-[node name="Area3DElevator" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3, 0)
-script = ExtResource("15_3v7ru")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3DElevator"]
-shape = SubResource("BoxShape3D_wlxy5")

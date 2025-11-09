@@ -6,8 +6,10 @@ var player_inside := false
 @export var camera_target_position : Vector3 = Vector3(0, 0, 0)  # World position
 @export var camera_target_rotation : Vector3 = Vector3(0, 0, 0)  # World position
 @export var camera_move_duration : float = 1.0
+@export var marks_task_ready: bool = false
 
 @onready var camera : Camera3D = get_node(camera_node_path)
+var _is_transitioning: bool = false
 
 func _ready():
 	self.body_entered.connect(_on_body_entered)
@@ -16,21 +18,20 @@ func _ready():
 func _on_body_entered(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = true
+		_mark_task_ready()
 
 func _on_body_exited(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = false
 
 func _process(delta):
-	var orb = get_tree().root.get_node_or_null("./MapLoader/Main/Orb")
-	if orb:
-		orb.position = camera_target_position
+	get_tree().root.get_node("./Main/Orb").position = camera_target_position
 		
-	if player_inside:
-		if get_parent():
-			get_parent().is_task_solved = true
-
-	if player_inside and Input.is_action_just_pressed("ui_accept"):
+	if player_inside and not _is_transitioning and Input.is_action_just_pressed("ui_accept"):
+		if camera == null:
+			return
+		_is_transitioning = true
+		_mark_task_ready()
 		var tween = get_tree().create_tween()
 		var direction = (camera_target_position - camera.global_transform.origin).normalized()
 		
@@ -63,5 +64,14 @@ func _process(delta):
 		tween.tween_callback(_on_tween_finished)
 
 func _on_tween_finished():
+	_is_transitioning = false
 	print("✅ switching sceens.")
 	get_tree().change_scene_to_file(target_scene)
+
+func _mark_task_ready() -> void:
+	if not marks_task_ready:
+		return
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.mark_desk_ready()
+	else:
+		print("Desk trigger missing GameState singleton.")

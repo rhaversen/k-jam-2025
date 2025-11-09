@@ -18,6 +18,8 @@ var _elevator_car: Node3D
 var _left_door: StaticBody3D
 var _right_door: StaticBody3D
 var _door_open_amount: float = 0.0
+var _interaction_area: Area3D
+var _player_inside: bool = false
 
 func setup(width: float, depth: float, height: float) -> void:
 	elevator_width = width
@@ -207,6 +209,8 @@ func _build_elevator_car() -> void:
 	light.position = Vector3(0, elevator_height - 0.2, 0)
 	_elevator_car.add_child(light)
 
+	_create_interaction_area()
+
 func _process(delta: float) -> void:
 	if _is_moving:
 		var target_y: float = float(_floors[_target_floor])
@@ -230,6 +234,9 @@ func _process(delta: float) -> void:
 	elif not _doors_open and _door_open_amount > 0.0:
 		_door_open_amount = max(0.0, _door_open_amount - delta * door_open_speed)
 		_update_door_positions()
+
+	if _player_inside and Input.is_action_just_pressed("ui_accept"):
+		_attempt_start_new_day()
 
 func _update_door_positions() -> void:
 	if _left_door and _right_door:
@@ -277,3 +284,47 @@ func _create_mesh_wall(size: Vector3, material: StandardMaterial3D, pos: Vector3
 	mesh_instance.material_override = material
 	mesh_instance.position = pos
 	return mesh_instance
+
+func _create_interaction_area() -> void:
+	_interaction_area = Area3D.new()
+	_interaction_area.name = "InteractionArea"
+	_interaction_area.position = Vector3(0, elevator_height * 0.5, 0)
+	_interaction_area.monitoring = true
+	_interaction_area.monitorable = true
+	_interaction_area.collision_layer = 1
+	_interaction_area.collision_mask = 1
+
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(elevator_width * 0.9, elevator_height, elevator_depth * 0.9)
+	shape.shape = box
+	shape.position = Vector3.ZERO
+	_interaction_area.add_child(shape)
+
+	_interaction_area.body_entered.connect(_on_interaction_body_entered)
+	_interaction_area.body_exited.connect(_on_interaction_body_exited)
+	_elevator_car.add_child(_interaction_area)
+
+func _on_interaction_body_entered(body: Node) -> void:
+	if body.name != "Player":
+		return
+	_player_inside = true
+	print("Elevator ready for new day check.")
+
+func _on_interaction_body_exited(body: Node) -> void:
+	if body.name != "Player":
+		return
+	_player_inside = false
+	print("Elevator interaction cleared.")
+
+func _attempt_start_new_day() -> void:
+	if _is_moving:
+		return
+	if typeof(GameState) == TYPE_NIL or GameState == null:
+		print("Elevator: GameState singleton unavailable.")
+		return
+	if not GameState.can_start_new_day():
+		print("Elevator: finish your desk work before leaving.")
+		return
+	if GameState.start_new_day():
+		print("Elevator departing for day %d." % GameState.current_day)
