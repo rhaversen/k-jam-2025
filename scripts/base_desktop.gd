@@ -27,6 +27,7 @@ func _ready() -> void:
 	
 	# Create cursor last to ensure it's on top
 	_create_cursor()
+	_mark_desk_task_complete()
 
 
 # --- ENVIRONMENT SETUP ---
@@ -308,3 +309,10 @@ func _on_exit_computer_pressed() -> void:
 		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)
 		return
 	get_tree().change_scene_to_file(EXIT_SCENE_PATH)
+
+
+func _mark_desk_task_complete() -> void:
+	if typeof(GameState) == TYPE_NIL or GameState == null:
+		return
+	GameState.mark_desk_ready()
+	GameState.set_next_spawn(GameState.SPAWN_DESK)

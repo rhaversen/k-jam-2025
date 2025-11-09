@@ -18,7 +18,6 @@ func _ready():
 func _on_body_entered(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = true
-		_mark_task_ready()
 
 func _on_body_exited(body: Node) -> void:
 	if body.name == "Player":
@@ -31,7 +30,6 @@ func _process(delta):
 		if camera == null:
 			return
 		_is_transitioning = true
-		_mark_task_ready()
 		var tween = get_tree().create_tween()
 
 		camera.frozen = true
@@ -67,12 +65,3 @@ func _on_tween_finished():
 	_is_transitioning = false
 	print("✅ switching sceens.")
 	get_tree().change_scene_to_file(target_scene)
-
-func _mark_task_ready() -> void:
-	if not marks_task_ready:
-		return
-	if typeof(GameState) != TYPE_NIL and GameState:
-		GameState.mark_desk_ready()
-		GameState.set_next_spawn(GameState.SPAWN_DESK)
-	else:
-		print("Desk trigger missing GameState singleton.")
