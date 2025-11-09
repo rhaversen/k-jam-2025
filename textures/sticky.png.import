@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkmnr7uppeayg"
-path="res://.godot/imported/steam_particle.png-f32233148f9ff52851afa1b9ecb8ca30.ctex"
+uid="uid://ii0kwi761b45"
+path="res://.godot/imported/sticky.png-10eee5611e7e885a2f59ddeeee49635e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/steam_particle.png"
-dest_files=["res://.godot/imported/steam_particle.png-f32233148f9ff52851afa1b9ecb8ca30.ctex"]
+source_file="res://textures/sticky.png"
+dest_files=["res://.godot/imported/sticky.png-10eee5611e7e885a2f59ddeeee49635e.ctex"]
 
 [params]
 
