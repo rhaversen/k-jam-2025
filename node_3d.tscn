@@ -154,6 +154,7 @@ script = ExtResource("11_tereu")
 
 [node name="Orb" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
+visible = false
 mesh = SubResource("SphereMesh_cdqbm")
 
 [node name="Area3DElevator" type="Area3D" parent="."]

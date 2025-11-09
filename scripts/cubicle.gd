@@ -147,11 +147,16 @@ func _rebuild() -> void:
 	var screen := MeshInstance3D.new()
 	screen.mesh = BoxMesh.new()
 	screen.mesh.size = Vector3(0.6, 0.35, 0.01)
+	var screen_is_active := employee_id == 10
 	var screen_mat := StandardMaterial3D.new()
-	screen_mat.albedo_color = Color(0.05, 0.1, 0.08)
-	screen_mat.emission_enabled = true
-	screen_mat.emission = Color(0.1, 0.8, 0.6)
-	screen_mat.emission_energy_multiplier = 3.5
+	if screen_is_active:
+		screen_mat.albedo_color = Color(0.05, 0.1, 0.08)
+		screen_mat.emission_enabled = true
+		screen_mat.emission = Color(0.1, 0.8, 0.6)
+		screen_mat.emission_energy_multiplier = 3.5
+	else:
+		screen_mat.albedo_color = Color(0, 0, 0)
+		screen_mat.emission_enabled = false
 	screen.material_override = screen_mat
 	var screen_base_position := Vector3(0, 0, -0.03)
 	screen.position = screen_base_position + Vector3(
@@ -161,26 +166,27 @@ func _rebuild() -> void:
 	)
 	monitor_body.add_child(screen)
 
-	# Use a SpotLight3D to simulate the screen emitting light forward only
-	var screen_light := SpotLight3D.new()
-	screen_light.light_color = Color(0.3, 0.6, 0.6)
-	screen_light.light_energy = 0.6
-	screen_light.spot_range = 2.0
-	screen_light.spot_angle = 90.0
-	screen_light.spot_angle_attenuation = 0.5
-	screen_light.position = Vector3(0, 0.0, -0.04)
-	screen_light.rotation_degrees = Vector3(0, 0, 0)
-	screen_light.shadow_enabled = true
-	screen_light.shadow_opacity = 0.9
-	screen_light.shadow_blur = 0.1
-	screen_light.shadow_bias = 0.05
-	screen_light.shadow_normal_bias = 1.0
-	screen.add_child(screen_light)
+	if screen_is_active:
+		# Use a SpotLight3D to simulate the screen emitting light forward only
+		var screen_light := SpotLight3D.new()
+		screen_light.light_color = Color(0.3, 0.6, 0.6)
+		screen_light.light_energy = 0.6
+		screen_light.spot_range = 2.0
+		screen_light.spot_angle = 90.0
+		screen_light.spot_angle_attenuation = 0.5
+		screen_light.position = Vector3(0, 0.0, -0.04)
+		screen_light.rotation_degrees = Vector3(0, 0, 0)
+		screen_light.shadow_enabled = true
+		screen_light.shadow_opacity = 0.9
+		screen_light.shadow_blur = 0.1
+		screen_light.shadow_bias = 0.05
+		screen_light.shadow_normal_bias = 1.0
+		screen.add_child(screen_light)
 
-	# Add monitor flicker script to screen - it will control both emission and light
-	var flicker_script = load("res://scripts/monitor_flicker.gd")
-	screen.set_script(flicker_script)
-	screen.set("base_light_energy", 0.6)
+		# Add monitor flicker script to screen - it will control both emission and light
+		var flicker_script = load("res://scripts/monitor_flicker.gd")
+		screen.set_script(flicker_script)
+		screen.set("base_light_energy", 0.6)
 
 	var mouse := MeshInstance3D.new()
 	var mouse_mesh := BoxMesh.new()
@@ -328,6 +334,7 @@ func _rebuild() -> void:
 			key.position = Vector3(x, y, z) + key_offset
 			desk.add_child(key)
 
+	_add_chair(self, desk_center_z, desk_depth, _rng)
 	_add_posters(self, interior_depth, _rng)
 	_center_layout()
 	_built = true
@@ -401,6 +408,73 @@ func make_poster_material(texture_path: String, poster_size) -> StandardMaterial
 	mat.roughness = 0.4
 	mat.albedo_color = Color(1, 1, 1)
 	return mat
+
+func _add_chair(parent: Node3D, desk_center_z: float, desk_depth: float, rng: RandomNumberGenerator) -> void:
+	var chair := Node3D.new()
+	chair.name = "Chair"
+	
+	var floor_level := -0.85
+	var forward_gap := 0.45 + rng.randf_range(-0.05, 0.2)
+	var lateral_offset := rng.randf_range(-0.4, 0.4)
+	var depth_offset := rng.randf_range(-0.15, 0.15)
+	var chair_z := desk_center_z + desk_depth * 0.5 + forward_gap + depth_offset
+	chair.position = Vector3(lateral_offset, floor_level, chair_z)
+	
+	var desk_target := Vector3(0.0, floor_level, desk_center_z)
+	var desk_dir := desk_target - chair.position
+	desk_dir.y = 0.0
+	if desk_dir.length() > 0.0001:
+		desk_dir = desk_dir.normalized()
+	var base_rotation := atan2(desk_dir.x, desk_dir.z)
+	var rotation_jitter := deg_to_rad(rng.randf_range(-20.0, 20.0))
+	chair.rotation.y = base_rotation + rotation_jitter
+	
+	parent.add_child(chair)
+	
+	var seat_mat := StandardMaterial3D.new()
+	seat_mat.albedo_color = Color(0.15, 0.15, 0.18)
+	seat_mat.roughness = 0.7
+	
+	var seat := MeshInstance3D.new()
+	seat.mesh = BoxMesh.new()
+	seat.mesh.size = Vector3(0.5, 0.08, 0.5)
+	seat.material_override = seat_mat
+	seat.position = Vector3(0, 0.5, 0)
+	seat.name = "Seat"
+	chair.add_child(seat)
+	
+	var back := MeshInstance3D.new()
+	back.mesh = BoxMesh.new()
+	back.mesh.size = Vector3(0.5, 0.6, 0.08)
+	back.material_override = seat_mat
+	back.position = Vector3(0, 0.8, -0.21)
+	back.name = "Back"
+	chair.add_child(back)
+	
+	var leg_mat := StandardMaterial3D.new()
+	leg_mat.albedo_color = Color(0.2, 0.2, 0.2)
+	leg_mat.metallic = 0.6
+	leg_mat.roughness = 0.4
+	
+	var center_pole := MeshInstance3D.new()
+	center_pole.mesh = CylinderMesh.new()
+	center_pole.mesh.top_radius = 0.04
+	center_pole.mesh.bottom_radius = 0.04
+	center_pole.mesh.height = 0.5
+	center_pole.material_override = leg_mat
+	center_pole.position = Vector3(0, 0.25, 0)
+	center_pole.name = "CenterPole"
+	chair.add_child(center_pole)
+	
+	var base := MeshInstance3D.new()
+	base.mesh = CylinderMesh.new()
+	base.mesh.top_radius = 0.25
+	base.mesh.bottom_radius = 0.25
+	base.mesh.height = 0.05
+	base.material_override = leg_mat
+	base.position = Vector3(0, 0.025, 0)
+	base.name = "Base"
+	chair.add_child(base)
 
 func _add_posters(parent: Node3D, depth: float, rng: RandomNumberGenerator) -> void:
 	var target_h := 0.8
