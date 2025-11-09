@@ -7,6 +7,8 @@ extends Node3D
 @export var shaft_height: float = 20.0
 @export var move_speed: float = 2.0
 @export var door_open_speed: float = 1.5
+@export var door_panel_thickness: float = 0.05
+@export var doorway_reveal_depth: float = 0.2
 
 var _is_moving: bool = false
 var _doors_open: bool = false
@@ -169,13 +171,15 @@ func _build_elevator_car() -> void:
 	back_wall.add_child(back_wall_collision)
 	
 	# Left door (StaticBody3D with mesh and collision)
-	var door_width := elevator_width * 0.5
-	var door_height := wall_height - 0.2
-	var door_thickness := 0.1
+	var door_width: float = elevator_width * 0.5
+	var door_height: float = wall_height - 0.15
+	var door_thickness: float = clampf(door_panel_thickness, 0.02, 0.09)
+	var door_offset: float = 0.06
+	var door_lower_offset: float = 0.1
 	
 	_left_door = StaticBody3D.new()
 	_left_door.name = "LeftDoor"
-	_left_door.position = Vector3(-door_width * 0.5, wall_height * 0.5, elevator_depth * 0.5)
+	_left_door.position = Vector3(-door_width * 0.5, wall_height * 0.5 - door_lower_offset, elevator_depth * 0.5 - door_thickness * 0.5 + door_offset)
 	_elevator_car.add_child(_left_door)
 	
 	var left_door_mesh := MeshInstance3D.new()
@@ -194,7 +198,7 @@ func _build_elevator_car() -> void:
 	# Right door (StaticBody3D with mesh and collision)
 	_right_door = StaticBody3D.new()
 	_right_door.name = "RightDoor"
-	_right_door.position = Vector3(door_width * 0.5, wall_height * 0.5, elevator_depth * 0.5)
+	_right_door.position = Vector3(door_width * 0.5, wall_height * 0.5 - door_lower_offset, elevator_depth * 0.5 - door_thickness * 0.5 + door_offset)
 	_elevator_car.add_child(_right_door)
 	
 	var right_door_mesh := MeshInstance3D.new()
@@ -210,6 +214,38 @@ func _build_elevator_car() -> void:
 	right_door_collision.shape = right_door_shape
 	_right_door.add_child(right_door_collision)
 	
+	var reveal_depth: float = maxf(doorway_reveal_depth - door_thickness, 0.0)
+	if reveal_depth > 0.01:
+		var side_width: float = minf(0.12, elevator_width * 0.25)
+		var top_height: float = minf(0.18, wall_height * 0.2)
+		var reveal_offset_z: float = elevator_depth * 0.5 + reveal_depth * 0.5
+		var left_trim: MeshInstance3D = MeshInstance3D.new()
+		left_trim.name = "DoorTrimLeft"
+		var left_trim_box: BoxMesh = BoxMesh.new()
+		left_trim_box.size = Vector3(side_width, wall_height, reveal_depth)
+		left_trim.mesh = left_trim_box
+		left_trim.material_override = wall_mat
+		left_trim.position = Vector3(-elevator_width * 0.5 + side_width * 0.5, wall_height * 0.5, reveal_offset_z)
+		_elevator_car.add_child(left_trim)
+
+		var right_trim: MeshInstance3D = MeshInstance3D.new()
+		right_trim.name = "DoorTrimRight"
+		var right_trim_box: BoxMesh = BoxMesh.new()
+		right_trim_box.size = Vector3(side_width, wall_height, reveal_depth)
+		right_trim.mesh = right_trim_box
+		right_trim.material_override = wall_mat
+		right_trim.position = Vector3(elevator_width * 0.5 - side_width * 0.5, wall_height * 0.5, reveal_offset_z)
+		_elevator_car.add_child(right_trim)
+
+		var top_trim: MeshInstance3D = MeshInstance3D.new()
+		top_trim.name = "DoorTrimTop"
+		var top_trim_box: BoxMesh = BoxMesh.new()
+		top_trim_box.size = Vector3(elevator_width, top_height, reveal_depth)
+		top_trim.mesh = top_trim_box
+		top_trim.material_override = wall_mat
+		top_trim.position = Vector3(0.0, wall_height - top_height * 0.5, reveal_offset_z)
+		_elevator_car.add_child(top_trim)
+
 	# Ceiling light
 	var light := OmniLight3D.new()
 	light.name = "CeilingLight"
@@ -390,7 +426,7 @@ func _on_reopen_timer_timeout() -> void:
 func _create_control_button() -> void:
 	var panel := StaticBody3D.new()
 	panel.name = "ControlPanel"
-	panel.position = Vector3(elevator_width * 0.5 - 0.1, elevator_height * 0.35, 0.0)
+	panel.position = Vector3(elevator_width * 0.5 - 0.1, elevator_height * 0.5, 0.0)
 	panel.rotation_degrees = Vector3(0, -90, 0)
 	_elevator_car.add_child(panel)
 

@@ -15,6 +15,7 @@ const WINDOW_SEGMENT_COUNT := 4
 const WINDOW_MULLION_WIDTH := 0.14
 const WINDOW_GLASS_INSET := 0.02
 const DEFAULT_CEILING_EXTENSION := 0.5
+const ELEVATOR_OPENING_TARGET_WIDTH := 2.0
 
 var _elevator_script: Script
 
@@ -126,9 +127,13 @@ func _spawn_wall_with_elevator(
 	if span_length <= 0.0 or full_wall_height <= 0.0:
 		return null
 
-	var opening_width: float = clampf(2.4, 0.0, maxf(0.0, span_length - 0.5))
-	var half_opening: float = opening_width * 0.5
 	var margin: float = maxf(0.25, wall_thickness)
+	var available_opening: float = maxf(0.0, span_length - margin * 2.0)
+	var target_opening: float = minf(ELEVATOR_OPENING_TARGET_WIDTH, available_opening)
+	if target_opening <= 0.0:
+		target_opening = available_opening
+	var opening_width: float = target_opening
+	var half_opening: float = opening_width * 0.5
 	var start: float = -span_length * 0.5
 	var end: float = span_length * 0.5
 	var axis_origin: float = wall_center.x if wall_id == WALL_NORTH or wall_id == WALL_SOUTH else wall_center.z
@@ -441,14 +446,19 @@ func _create_elevator(
 	if elevator == null:
 		return null
 	elevator.name = "Elevator"
-	var elevator_height_value: float = maxf(wall_height, 2.5)
+	var elevator_height_value: float = maxf(wall_height, 2.5) - 0.32
 	elevator.set("elevator_width", 2.0)
 	elevator.set("elevator_depth", 2.0)
 	elevator.set("elevator_height", elevator_height_value)
+	var desired_door_thickness: float = clampf(wall_thickness * 0.5, 0.03, 0.06)
+	elevator.set("door_panel_thickness", desired_door_thickness)
+	var reveal_depth: float = wall_thickness + 0.2
+	elevator.set("doorway_reveal_depth", reveal_depth)
 
 	var elevator_depth: float = float(elevator.get("elevator_depth"))
 	var normal: Vector3 = inward_normal.normalized()
-	var inset: float = -elevator_depth * 0.5
+	var clearance: float = wall_thickness * 0.5 + 0.02
+	var inset: float = -elevator_depth * 0.5 - clearance
 	var depth_offset: Vector3 = normal * inset
 	var base_y: float = door_center.y - wall_height * 0.5
 	elevator.position = Vector3(door_center.x, base_y, door_center.z) + depth_offset
