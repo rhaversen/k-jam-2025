@@ -32,13 +32,12 @@ func _process(delta):
 		orb.position = camera_target_position
 
 	var day_locked := typeof(GameState) != TYPE_NIL and GameState and GameState.is_day_complete()
-	if player_inside:
-		if _is_transitioning or day_locked:
-			_set_crosshair(false, false)
-		else:
-			_set_crosshair(true, _can_start_transition())
-	else:
+	if not player_inside:
+		return
+	if _is_transitioning or day_locked:
 		_set_crosshair(false, false)
+	else:
+		_set_crosshair(true, _can_start_transition())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _can_start_transition():
