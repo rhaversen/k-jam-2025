@@ -8,9 +8,9 @@ extends CharacterBody3D
 static var stress_pressed = false
 
 static var stressed_1_var = false
-static var stressed_1 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
-static var stressed_1_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0}
-static var stressed_1_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
+static var stressed_1 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false, "voices": false}
+static var stressed_1_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0, "voices": 0.0}
+static var stressed_1_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false, "voices": false}
 static func is_stressed_1() -> Dictionary:
 	return stressed_1_dict
 	
@@ -31,7 +31,7 @@ func check_dict(delta: float, event: String) -> void:
 			stressed_1_dict[event] = false
 	
 	if stressed_1[event] && !stressed_1_dict[event]:
-		var roll_value = randi_range(0, 1000)
+		var roll_value = randi_range(0, 100)
 		if roll_value == 0:
 			stressed_1_dict[event] = true
 			stressed_1_duration[event] = randf_range(1,10)
@@ -62,13 +62,17 @@ func _physics_process(delta: float) -> void:
 		#else:
 			#stressed_2["blind"] = true
 	
-	if GameState.current_day > 1 || GameState.current_day == 1 && GameState.completed_today:
+	var current_day = GameState.current_day;
+	if GameState.completed_today:
+		current_day += 1;
+	
+	if current_day >= 1:
 		stressed_1["ground"] = true;
-	else: if GameState.current_day > 2 || GameState.current_day == 2 && GameState.completed_today:
-		pass
-	else: if GameState.current_day > 3 || GameState.current_day == 3 && GameState.completed_today:
+	if current_day >= 2:
+		stressed_1["voices"] = true;
+	if current_day >= 3:
 		stressed_1["camera"] = true;
-	else: if GameState.current_day > 4 || GameState.current_day == 4 && GameState.completed_today:
+	if current_day >= 4:
 		stressed_1["blind"] = true;
 		stressed_1["color"] = true;
 	

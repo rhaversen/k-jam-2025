@@ -9,7 +9,7 @@ func _ready():
 	max_distance = 20.0
 	
 
-func _process(delta):
+func _process(_delta):
 	if playing:
 		return
 
