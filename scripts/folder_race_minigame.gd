@@ -243,7 +243,7 @@ func _show_mail_contacts() -> void:
 
 func _on_contact_clicked(contact_name: String) -> void:
 	if contact_name == "Alex Pendell":
-		var urgent_text := "[b]From:[/b] Alex Pendell\n[b]Subject:[/b] URGENT: Missing report\n\nI need the [color=yellow]%s[/color] in the next minute. If I don't have it, I'm filing a complaint with the boss. Hop to it!".format([TARGET_FILE])
+		var urgent_text := "[b]From:[/b] Alex Pendell\n[b]Subject:[/b] URGENT: Missing report\n\nI need the [color=yellow]Wells report[/color] in the next minute. If I don't have it, I'm filing a complaint with the boss. Hop to it!".format([TARGET_FILE])
 		_show_mail_message(urgent_text, true)
 		var updated := false
 		for coworker in coworkers:
