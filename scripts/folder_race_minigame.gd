@@ -300,7 +300,7 @@ func _create_notes_window() -> void:
 	add_child(notes_window)
 
 
-func _show_mail_message(text: String, show_countdown: bool = false) -> void:
+func _show_mail_message(text: String, show_countdown: bool = false) -> PanelContainer:
 	if mail_message_window and is_instance_valid(mail_message_window):
 		var existing_content = find_child_by_name(mail_message_window, "content")
 		if existing_content:
@@ -314,7 +314,7 @@ func _show_mail_message(text: String, show_countdown: bool = false) -> void:
 					else:
 						mail_message_label.text = text
 					bring_to_front(mail_message_window)
-					return
+					return mail_message_window
 
 	var base_position := Vector2(120, 80)
 	if mail_window and is_instance_valid(mail_window):
@@ -344,6 +344,8 @@ func _show_mail_message(text: String, show_countdown: bool = false) -> void:
 
 	add_child(mail_message_window)
 	bring_to_front(mail_message_window)
+	
+	return mail_message_window
 
 
 func _update_mail_message_text() -> void:
@@ -424,8 +426,11 @@ func _handle_mission_failure() -> void:
 	mail_message_base_text = ""
 	_stop_tick()
 	_hide_exit_button()
-	_show_mail_message("[b]From:[/b] Alex Pendell\n[b]Subject:[/b] Escalating to management\n\nYou missed the deadline. I'm looping in our boss. We'll talk about this later.")
-	_start_fail_sequence()
+	
+	var failure_message_window := _show_mail_message("[b]From:[/b] Alex Pendell\n[b]Subject:[/b] Escalating to management\n\nYou missed the deadline. I'm looping in our boss. We'll talk about this later.")
+	
+	# Start red fade immediately - blend from pulsating countdown red
+	_start_red_fade_failure(failure_message_window)
 
 
 func _handle_mission_success() -> void:
@@ -483,10 +488,28 @@ func _begin_success_return() -> void:
 	await _fade_to_black_and_exit()
 
 
-func _begin_failure_return() -> void:
-	if not mission_failed:
-		return
-	await get_tree().create_timer(0.4).timeout
+func _start_red_fade_failure(failure_window: PanelContainer) -> void:
+	# Hide the stress overlay
+	if stress_overlay and is_instance_valid(stress_overlay):
+		stress_overlay.visible = false
+	
+	# Create red overlay - instantly at full intensity
+	var red_overlay := ColorRect.new()
+	red_overlay.color = Color(1, 0, 0, 0.8)  # Instant red at 80% opacity
+	red_overlay.size = get_viewport_rect().size
+	red_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	red_overlay.z_index = 9999  # Very high to be above everything
+	add_child(red_overlay)
+	
+	# Fade out the failure window
+	if failure_window and is_instance_valid(failure_window):
+		var tween := create_tween()
+		tween.tween_property(failure_window, "modulate", Color(1, 1, 1, 0), 1.5)  # Fade out over 1.5 seconds
+	
+	print("💀 Red screen instantly active!")
+	
+	# Wait a moment, then cut to black and return to office
+	await get_tree().create_timer(1.5).timeout
 	await _fade_to_black_and_exit()
 
 

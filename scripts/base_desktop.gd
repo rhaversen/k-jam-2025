@@ -319,6 +319,11 @@ func _on_exit_computer_pressed() -> void:
 	if typeof(GameState) != TYPE_NIL and GameState:
 		GameState.stop_minigame_music()
 	
+	
+	# Set spawn location to desk after exiting computer
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.set_next_spawn(GameState.SPAWN_DESK)
+	
 	if not ResourceLoader.exists(EXIT_SCENE_PATH):
 		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)
 		return
