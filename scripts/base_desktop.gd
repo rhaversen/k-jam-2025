@@ -315,6 +315,11 @@ func _create_exit_button() -> void:
 func _on_exit_computer_pressed() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	
+	# Stop minigame music when exiting
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.stop_minigame_music()
+	
+	
 	# Set spawn location to desk after exiting computer
 	if typeof(GameState) != TYPE_NIL and GameState:
 		GameState.set_next_spawn(GameState.SPAWN_DESK)

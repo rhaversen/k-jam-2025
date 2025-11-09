@@ -14,8 +14,10 @@ const TERMINAL_MARGIN_RIGHT := 0.0
 const TERMINAL_MARGIN_TOP := 32.0
 const TERMINAL_MARGIN_BOTTOM := 64.0
 const CURSOR_BLINK_INTERVAL := 0.45
+const POWER_ON_DELAY := 2.0
 
 var boot_lines = [
+	"System power on... initializing hardware.",
 	"POST diagnostics: nominal, sarcasm module idle.",
 	"Detecting CPU topology: 8 cores, threads gossiping.",
 	"Mounting root filesystem (ext4) with optimism.",
@@ -47,6 +49,7 @@ var background_rect: ColorRect
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	
 	# --- Background ---
 	background_rect = ColorRect.new()
 	background_rect.color = Color(0.18, 0.9, 0.72)
@@ -96,6 +99,21 @@ func _create_background_fade() -> void:
 
 
 func _start_boot_sequence() -> void:
+	# Show first line immediately (power on)
+	if boot_lines.size() > 0:
+		_append_terminal_line(boot_lines[0])
+		current_line = 1
+	
+	# Wait 0.5 seconds before starting music (skip silent part)
+	await get_tree().create_timer(0.5).timeout
+	
+	# Start minigame music
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.play_minigame_music()
+	
+	# Wait remaining time for power-on delay
+	await get_tree().create_timer(POWER_ON_DELAY - 0.5).timeout
+	
 	if line_delay_timer:
 		line_delay_timer.queue_free()
 	line_delay_timer = Timer.new()
