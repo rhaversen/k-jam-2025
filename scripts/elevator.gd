@@ -319,6 +319,7 @@ func _on_interaction_body_entered(body: Node) -> void:
 		return
 	_player_inside = true
 	print("Elevator ready for new day check.")
+	_set_crosshair(true, _button_enabled and _button_focused)
 
 func _on_interaction_body_exited(body: Node) -> void:
 	if body.name != "Player":
@@ -332,6 +333,7 @@ func _on_interaction_body_exited(body: Node) -> void:
 	if _button_focused:
 		_button_focused = false
 		_update_button_visual()
+	_set_crosshair(false, false)
 
 func _attempt_start_new_day() -> void:
 	if _is_moving:
@@ -346,6 +348,7 @@ func _attempt_start_new_day() -> void:
 		close_doors()
 		print("Elevator departing for day %d." % GameState.current_day)
 		_set_button_enabled(false)
+		_set_crosshair(false, false)
 		GameState.set_next_spawn(GameState.SPAWN_ELEVATOR)
 		_schedule_door_reopen()
 
@@ -470,6 +473,7 @@ func _update_button_focus() -> void:
 	if focused != _button_focused:
 		_button_focused = focused
 		_update_button_visual()
+	_set_crosshair(_player_inside, focused and _button_enabled)
 
 func _update_button_visual() -> void:
 	if _button_material == null:
@@ -488,6 +492,9 @@ func _set_button_enabled(enabled: bool) -> void:
 	if not enabled:
 		_button_emission_phase = 0.0
 	_update_button_visual()
+	if not _player_inside:
+		return
+	_set_crosshair(_button_enabled, _button_focused and _button_enabled)
 
 func _get_player_camera() -> Camera3D:
 	if _player_camera and is_instance_valid(_player_camera):
@@ -502,8 +509,16 @@ func _update_button_emission(delta: float) -> void:
 		return
 	var intensity := 0.0
 	if _button_enabled:
-		_button_emission_phase = fmod(_button_emission_phase + delta * _button_blink_speed * TAU, TAU)
-		intensity = 0.5 + 0.5 * sin(_button_emission_phase)
+		if _button_focused:
+			intensity = 1.0
+		else:
+			_button_emission_phase = fmod(_button_emission_phase + delta * _button_blink_speed * TAU, TAU)
+			intensity = 0.5 + 0.5 * sin(_button_emission_phase)
 	else:
 		_button_emission_phase = 0.0
 	_button_material.emission_energy_multiplier = intensity * 3.5
+
+func _set_crosshair(active: bool, highlighted: bool) -> void:
+	var camera := _get_player_camera()
+	if camera and camera.has_method("set_interaction_hint"):
+		camera.set_interaction_hint(active and _button_enabled, highlighted and _button_enabled)

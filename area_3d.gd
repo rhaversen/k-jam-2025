@@ -18,15 +18,23 @@ func _ready():
 func _on_body_entered(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = true
+		_set_crosshair(true, false)
 
 func _on_body_exited(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = false
+		_set_crosshair(false, false)
 
 func _process(delta):
 	var orb := get_tree().root.get_node_or_null("./Main/Orb")
 	if orb:
 		orb.position = camera_target_position
+
+	if player_inside:
+		if _is_transitioning:
+			_set_crosshair(false, false)
+		else:
+			_set_crosshair(true, _can_start_transition())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _can_start_transition():
@@ -62,6 +70,7 @@ func _start_transition() -> void:
 	_is_transitioning = true
 	if camera == null:
 		return
+	_set_crosshair(false, false)
 	var tween := get_tree().create_tween()
 	camera.frozen = true
 	var target_transform := camera.global_transform.looking_at(camera_target_position, Vector3.UP)
@@ -89,3 +98,7 @@ func _start_transition() -> void:
 		camera_move_duration
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_callback(_on_tween_finished)
+
+func _set_crosshair(active: bool, highlighted: bool) -> void:
+	if camera and camera.has_method("set_interaction_hint"):
+		camera.set_interaction_hint(active, highlighted)
