@@ -27,6 +27,8 @@ var _button_enabled: bool = false
 var _button_focused: bool = false
 var _button_emission_phase: float = 0.0
 var _button_blink_speed: float = 1.2
+var _button_interaction_area: Area3D
+var _button_interaction_inside: bool = false
 
 func setup(width: float, depth: float, height: float) -> void:
 	elevator_width = width
@@ -439,10 +441,26 @@ func _create_control_button() -> void:
 	button_shape.shape = button_plate
 	_button_body.add_child(button_shape)
 
+	_button_interaction_area = Area3D.new()
+	_button_interaction_area.name = "ButtonArea"
+	_button_interaction_area.monitoring = true
+	_button_interaction_area.monitorable = true
+	_button_interaction_area.collision_layer = 1
+	_button_interaction_area.collision_mask = 1
+	var area_shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.8, 1.4, 0.8)
+	area_shape.shape = box
+	area_shape.position = Vector3(0.0, 0.0, 0.0)
+	_button_interaction_area.add_child(area_shape)
+	_button_interaction_area.body_entered.connect(_on_button_area_entered)
+	_button_interaction_area.body_exited.connect(_on_button_area_exited)
+	_button_body.add_child(_button_interaction_area)
+
 	_update_button_visual()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _button_enabled or not _button_focused:
+	if not _button_enabled or not _button_focused or not _button_interaction_inside:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		_attempt_start_new_day()
@@ -451,7 +469,7 @@ func _update_button_focus() -> void:
 	var focused := false
 	if _button_enabled and _player_inside and _button_body:
 		var camera := _get_player_camera()
-		if camera:
+		if camera and _button_interaction_inside:
 			var from := camera.global_transform.origin
 			var forward := -camera.global_transform.basis.z
 			var to := from + forward * 4.0
@@ -522,3 +540,17 @@ func _set_crosshair(active: bool, highlighted: bool) -> void:
 	var camera := _get_player_camera()
 	if camera and camera.has_method("set_interaction_hint"):
 		camera.set_interaction_hint(active and _button_enabled, highlighted and _button_enabled)
+
+func _on_button_area_entered(body: Node) -> void:
+	if body.name != "Player":
+		return
+	_button_interaction_inside = true
+	_set_crosshair(_button_enabled, _button_focused and _button_enabled)
+
+func _on_button_area_exited(body: Node) -> void:
+	if body.name != "Player":
+		return
+	_button_interaction_inside = false
+	_button_focused = false
+	_update_button_visual()
+	_set_crosshair(false, false)
