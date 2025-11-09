@@ -545,26 +545,31 @@ func _generate_folder_tree() -> void:
 	folder_tree = {"Desktop": {}}
 	var desktop: Dictionary = folder_tree["Desktop"] as Dictionary
 
-	# Add decoy folders
-	for i in range(3):
-		var decoy_name := _random_folder_name()
-		while desktop.has(decoy_name):
-			decoy_name = _random_folder_name()
-		desktop[decoy_name] = _make_subfolders(0, 0)
-
 	# Create guaranteed path
 	var current: Dictionary = desktop
 	for level in range(TARGET_PATH.size()):
 		var folder: String = TARGET_PATH[level]
 		if not current.has(folder):
 			current[folder] = {}
-		var sibling_decoys: int = randi_range(1, 3)
-		for _j in range(sibling_decoys):
-			var sibling_name: String = _random_folder_name()
-			while current.has(sibling_name):
-				sibling_name = _random_folder_name()
-			current[sibling_name] = _make_subfolders(level + 1, 0)
+		
+		# Only add sibling decoys if we're NOT at the desktop level (level 0)
+		# At desktop level, we'll add exactly 3 decoys separately
+		if level > 0:
+			var sibling_decoys: int = randi_range(1, 3)
+			for _j in range(sibling_decoys):
+				var sibling_name: String = _random_folder_name()
+				while current.has(sibling_name):
+					sibling_name = _random_folder_name()
+				current[sibling_name] = _make_subfolders(level + 1, 0)
+		
 		current = current[folder] as Dictionary
+	
+	# Add exactly 3 decoy folders to desktop
+	for i in range(3):
+		var decoy_name := _random_folder_name()
+		while desktop.has(decoy_name):
+			decoy_name = _random_folder_name()
+		desktop[decoy_name] = _make_subfolders(0, 0)
 
 	# Add extra folders inside final target folder
 	var internal_decoys: int = randi_range(2, 4)
