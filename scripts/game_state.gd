@@ -228,6 +228,16 @@ func flag_day_complete() -> void:
 		return
 	completed_today = true
 	emit_signal("day_completed", current_day)
+	
+	if current_day == 1:
+		get_tree().root.get_node("./Main/Player").stressed_1["ground"] = true;
+	else: if current_day == 2:
+		pass
+	else: if current_day == 3:
+		get_tree().root.get_node("./Main/Player").stressed_1["camera"] = true;
+	else: if current_day == 4:
+		get_tree().root.get_node("./Main/Player").stressed_1["blind"] = true;
+		get_tree().root.get_node("./Main/Player").stressed_1["color"] = true;
 
 func get_minigame_for_day(day: int) -> String:
 	return desk_minigame_map.get(day, "")

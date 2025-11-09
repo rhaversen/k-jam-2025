@@ -51,16 +51,16 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("move_forward"):
 		direction.z += 1
 		
-	if Input.is_action_just_pressed("stress"):
-		if !stressed_1_var && !stress_pressed:
-			stressed_1["blind"] = true
-			stressed_1["camera"] = true
-			stressed_1["color"] = true
-			stressed_1["earthquake"] = true
-			stressed_1["ground"] = true
-			stress_pressed = true
-		else:
-			stressed_2["blind"] = true
+	#if Input.is_action_just_pressed("stress"):
+		#if !stressed_1_var && !stress_pressed:
+			#stressed_1["blind"] = true
+			#stressed_1["camera"] = true
+			#stressed_1["color"] = true
+			#stressed_1["earthquake"] = true
+			#stressed_1["ground"] = true
+			#stress_pressed = true
+		#else:
+			#stressed_2["blind"] = true
 	
 	check_dict(delta, "color")
 	check_dict(delta, "blind")

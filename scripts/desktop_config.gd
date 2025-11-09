@@ -36,7 +36,7 @@ func _ready() -> void:
 
 func get_desktop_script_path() -> String:
 	if typeof(GameState) != TYPE_NIL and GameState:
-		var scheduled_path := GameState.get_desktop_script_for_day(GameState.current_day)
+		var scheduled_path = GameState.get_desktop_script_for_day(GameState.current_day)
 		if scheduled_path != "":
 			return scheduled_path
 	return _mode_to_script_path(current_mode)
