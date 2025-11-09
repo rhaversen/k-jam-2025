@@ -314,6 +314,11 @@ func _create_exit_button() -> void:
 
 func _on_exit_computer_pressed() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	
+	# Stop minigame music when exiting
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.stop_minigame_music()
+	
 	if not ResourceLoader.exists(EXIT_SCENE_PATH):
 		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)
 		return

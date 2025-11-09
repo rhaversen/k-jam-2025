@@ -15,9 +15,95 @@ var desk_focus_duration: float = 1.0
 var desk_minigame_map: Dictionary = {}
 var completed_today: bool = false
 
+var _day_music_player: AudioStreamPlayer
+var _day_music_path: String = ""
+var _minigame_music_player: AudioStreamPlayer
+var _minigame_music_path: String = ""
+
 signal desk_task_flagged
 signal day_progressed(new_day: int)
 signal day_completed(day: int)
+signal minigame_started
+
+func _ready() -> void:
+	_setup_day_music()
+	_setup_minigame_music()
+
+func _setup_day_music() -> void:
+	_day_music_player = AudioStreamPlayer.new()
+	_day_music_player.name = "DayMusicPlayer"
+	_day_music_player.bus = "Master"
+	add_child(_day_music_player)
+	
+	# Set default day music
+	set_day_music("res://sound/room-tone-office.mp3")
+	print("GameState: Day music system initialized")
+
+func _setup_minigame_music() -> void:
+	_minigame_music_player = AudioStreamPlayer.new()
+	_minigame_music_player.name = "MinigameMusicPlayer"
+	_minigame_music_player.bus = "Master"
+	add_child(_minigame_music_player)
+	
+	# Set default minigame boot sound
+	set_minigame_music("res://sound/old-desktop-pc-booting.mp3")
+	print("GameState: Minigame music system initialized")
+
+func set_day_music(music_path: String) -> void:
+	_day_music_path = music_path
+	print("GameState: Loading day music from: %s" % music_path)
+	if _day_music_path != "" and ResourceLoader.exists(_day_music_path):
+		var stream: AudioStream = load(_day_music_path)
+		if stream:
+			_day_music_player.stream = stream
+			# Enable looping for ambient office sound
+			if stream is AudioStreamMP3:
+				stream.loop = true
+			print("GameState: Day music loaded successfully")
+		else:
+			push_warning("GameState: Failed to load day music stream")
+	else:
+		push_warning("GameState: Day music file not found: %s" % music_path)
+
+func set_minigame_music(music_path: String) -> void:
+	_minigame_music_path = music_path
+	print("GameState: Loading minigame music from: %s" % music_path)
+	if _minigame_music_path != "" and ResourceLoader.exists(_minigame_music_path):
+		var stream: AudioStream = load(_minigame_music_path)
+		if stream:
+			_minigame_music_player.stream = stream
+			# Minigame sound plays once (no loop)
+			if stream is AudioStreamMP3:
+				stream.loop = false
+			print("GameState: Minigame music loaded successfully")
+		else:
+			push_warning("GameState: Failed to load minigame music stream")
+	else:
+		push_warning("GameState: Minigame music file not found: %s" % music_path)
+
+func play_day_music() -> void:
+	if _day_music_player and _day_music_player.stream:
+		_day_music_player.play()
+		print("GameState: Day music started playing: %s" % _day_music_path)
+	else:
+		push_warning("GameState: Cannot play day music - player or stream is null")
+
+func stop_day_music() -> void:
+	if _day_music_player:
+		_day_music_player.stop()
+		print("GameState: Day music stopped")
+
+func play_minigame_music() -> void:
+	if _minigame_music_player and _minigame_music_player.stream:
+		_minigame_music_player.play()
+		emit_signal("minigame_started")
+		print("GameState: Minigame music started: %s" % _minigame_music_path)
+	else:
+		push_warning("GameState: Cannot play minigame music - player or stream is null")
+
+func stop_minigame_music() -> void:
+	if _minigame_music_player:
+		_minigame_music_player.stop()
 
 func mark_desk_ready() -> void:
 	if completed_today:
@@ -34,6 +120,7 @@ func start_new_day() -> bool:
 		return false
 	current_day += 1
 	completed_today = false
+	play_day_music()
 	emit_signal("day_progressed", current_day)
 	print("GameState: Advancing to day %d." % current_day)
 	return true

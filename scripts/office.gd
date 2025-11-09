@@ -28,6 +28,10 @@ var _perimeter_builder: OfficePerimeterBuilder = OfficePerimeterBuilderScript.ne
 func _ready() -> void:
 	_is_ready = true
 	_rebuild_office()
+	
+	# Start day music when office loads (for day 1)
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.play_day_music()
 
 func _rebuild_office() -> void:
 	_clear_office()
