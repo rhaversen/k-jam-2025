@@ -13,6 +13,10 @@ var drag_offset: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	super._ready()  # Call browsable desktop setup
 	
+	# Set clock to run from 8:00 to 16:00 (8 hours) over estimated task duration
+	# Assuming ~1-2 minutes to organize files
+	set_clock_parameters(8, 16, 90.0)  # 90 seconds = 1.5 minutes
+	
 	# Generate loose files on desktop after folders are created
 	await get_tree().process_frame  # Wait for desktop to finish setup
 	_generate_loose_files()

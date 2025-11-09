@@ -56,6 +56,10 @@ var mail_window_default_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
+	
+	# Set clock to run from 8:00 to 20:00 (12 hours) over the mission duration
+	set_clock_parameters(8, 20, MISSION_DURATION_SECONDS)
+	
 	_hide_exit_button()
 	
 	# Setup mini-game specific UI

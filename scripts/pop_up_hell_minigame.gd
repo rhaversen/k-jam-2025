@@ -39,6 +39,9 @@ var popup_messages: Array = [
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
 	
+	# Set clock to run from 8:00 to 20:00 (12 hours) over the game duration (30 seconds)
+	set_clock_parameters(8, 20, time_remaining)
+	
 	# Hide exit button immediately
 	_hide_exit_button()
 	

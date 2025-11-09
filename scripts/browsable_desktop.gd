@@ -21,6 +21,9 @@ var mail_window_default_size: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	super._ready()  # Call base desktop setup
 	
+	# Set clock to run from 8:00 to 16:00 slowly (for casual browsing)
+	set_clock_parameters(8, 16, 300.0)  # 5 minutes for a full workday
+	
 	# Add mail and notes windows
 	_create_mail_window()
 	_create_notes_window()
