@@ -11,8 +11,8 @@ const ELEVATOR_WALL_EAST := "east"
 const ELEVATOR_WALL_SOUTH := "south"
 const ELEVATOR_WALL_WEST := "west"
 
-@export var grid_rows: int = 3
-@export var grid_columns: int = 5
+@export var grid_rows: int = 2
+@export var grid_columns: int = 4
 @export var cubicle_width: float = 4.0
 @export var cubicle_depth: float = 3.0
 @export var aisle_width: float = 6.0
