@@ -1,45 +1,27 @@
 extends CharacterBody3D
 
 # How fast the player moves in meters per second.
-@export var speed = 2
+@export var speed: float = 2.0
 # The downward acceleration when in the air, in meters per second squared.
-@export var fall_acceleration = 75
+@export var fall_acceleration: float = 75.0
 
-static var stress_pressed = false
+var target_velocity: Vector3 = Vector3.ZERO
 
-static var stressed_1_var = false
-static var stressed_1 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false, "voices": false}
-static var stressed_1_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0, "voices": 0.0}
-static var stressed_1_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false, "voices": false}
-static func is_stressed_1() -> Dictionary:
-	return stressed_1_dict
-	
-static var stressed_2_var = false
-static var stressed_2 := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
-static var stressed_2_duration := {"blind": 0.0, "color": 0.0, "camera": 0.0, "earthquake": 0.0, "ground": 0.0}
-static var stressed_2_dict := {"blind": false, "color": false, "camera": false, "earthquake": false, "ground": false}
-static func is_stressed_2() -> Dictionary:
-	return stressed_2_dict
+var _stress_system: StressEffectSystem
+static var _stress_snapshot: Dictionary = {}
 
-var target_velocity = Vector3.ZERO
+func _init() -> void:
+	_initialize_stress_snapshot()
 
-func check_dict(delta: float, event: String) -> void:
-	if stressed_1_dict[event]:
-		stressed_1_duration[event] -= delta
-		if stressed_1_duration[event] <= 0:
-			stressed_1_duration[event] = 0.0
-			stressed_1_dict[event] = false
-	
-	if stressed_1[event] && !stressed_1_dict[event]:
-		var roll_value = randi_range(0, 100)
-		if roll_value == 0:
-			stressed_1_dict[event] = true
-			stressed_1_duration[event] = randf_range(1,10)
-		
-	
+func _ready() -> void:
+	_stress_system = StressEffectSystem.new()
+	_stress_snapshot = _stress_system.snapshot()
+
 func _physics_process(delta: float) -> void:
+	_update_stress_effects(delta)
+
 	# We create a local variable to store the input direction.
-	var direction = Vector3.ZERO
+	var direction := Vector3.ZERO
 	
 	# We check for each move input and update the direction accordingly.
 	if Input.is_action_pressed("move_right"):
@@ -51,37 +33,6 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("move_forward"):
 		direction.z += 1
 		
-	#if Input.is_action_just_pressed("stress"):
-		#if !stressed_1_var && !stress_pressed:
-			#stressed_1["blind"] = true
-			#stressed_1["camera"] = true
-			#stressed_1["color"] = true
-			#stressed_1["earthquake"] = true
-			#stressed_1["ground"] = true
-			#stress_pressed = true
-		#else:
-			#stressed_2["blind"] = true
-	
-	var current_day = GameState.current_day-1;
-	if GameState.completed_today:
-		current_day += 1;
-	
-	if current_day >= 1:
-		stressed_1["ground"] = true;
-	if current_day >= 2:
-		stressed_1["voices"] = true;
-	if current_day >= 3:
-		stressed_1["camera"] = true;
-	if current_day >= 4:
-		stressed_1["blind"] = true;
-		stressed_1["color"] = true;
-	
-	check_dict(delta, "color")
-	check_dict(delta, "blind")
-	check_dict(delta, "camera")
-	check_dict(delta, "earthquake")
-	check_dict(delta, "ground")
-	
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
 		# Setting the basis property will affect the rotation of the node.
@@ -115,3 +66,31 @@ func _physics_process(delta: float) -> void:
 	# Moving the Character
 	velocity = target_velocity
 	move_and_slide()
+
+func is_stressed_1() -> Dictionary:
+	return _stress_snapshot
+
+func get_stress_effect_intensity(effect_id: String) -> float:
+	return _stress_snapshot.get(effect_id, 0.0)
+
+func get_stress_effect_state(effect_id: String) -> Dictionary:
+	if _stress_system == null:
+		return {"intensity": 0.0, "activation": 0.0}
+	return _stress_system.get_effect_state(effect_id)
+
+func _update_stress_effects(delta: float) -> void:
+	if _stress_system == null:
+		return
+	var day := 1
+	var completed := false
+	if typeof(GameState) != TYPE_NIL and GameState:
+		day = GameState.current_day
+		completed = GameState.completed_today
+	_stress_system.update(delta, day, completed)
+	_stress_snapshot = _stress_system.snapshot()
+
+func _initialize_stress_snapshot() -> void:
+	if _stress_snapshot.is_empty():
+		for effect_id in StressEffectSystem.effect_ids():
+			var config: Dictionary = StressEffectSystem.EFFECT_CONFIGS.get(effect_id, {})
+			_stress_snapshot[effect_id] = float(config.get("min_value", 0.0))

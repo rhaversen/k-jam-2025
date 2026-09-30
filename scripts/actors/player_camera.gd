@@ -29,7 +29,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	#elif event.is_action_pressed("ui_accept"):
 		#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
-var drift = Vector2(0.0, 0.0);
+var drift := Vector2.ZERO
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -38,25 +38,21 @@ func _process(delta):
 	if frozen:
 		return
 
-	if get_parent().is_stressed_1()["camera"]:
-		if randi_range(0, 100) < 15:
-			drift.x += 0.1 * look_speed * delta
-		if randi_range(0, 100) < 15:
-			drift.y += 0.1 * look_speed * delta
-		if randi_range(0, 100) < 15:
-			drift.x -= 0.1 * look_speed * delta
-		if randi_range(0, 100) < 15:
-			drift.y -= 0.1 * look_speed * delta
-			
+	var player := get_parent()
+	var camera_intensity: float = 0.0
+	if player != null:
+		camera_intensity = float(player.is_stressed_1().get("camera", 0.0))
+	if camera_intensity > 0.0:
+		var jitter_strength: float = look_speed * delta * camera_intensity
+		drift.x += randf_range(-1.0, 1.0) * jitter_strength
+		drift.y += randf_range(-1.0, 1.0) * jitter_strength
+		var max_drift: float = maxf(camera_intensity, 0.0)
+		drift = drift.limit_length(max_drift)
 		rotation.x += drift.x
 		rotation.y += drift.y
-		
-		if abs(drift.x) > 1 || abs(drift.y) > 1:
-			drift.x = 0
-			drift.y = 0
+		drift = drift.move_toward(Vector2.ZERO, delta * look_speed)
 	else:
-		drift.x = 0
-		drift.y = 0
+		drift = drift.move_toward(Vector2.ZERO, delta * look_speed)
 
 	# Horizontal rotation (yaw)
 	if Input.is_action_pressed("look_right"):

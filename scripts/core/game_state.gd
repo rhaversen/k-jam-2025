@@ -5,7 +5,7 @@ const SPAWN_DESK := "desk"
 const DISREPAIR_MIN_DAY := 1
 const DISREPAIR_MAX_DAY := 4
 
-var current_day: int = 1
+var current_day: int = 3
 var is_first_spawn: bool = true
 var next_spawn_location: String = SPAWN_ELEVATOR
 var desk_spawn_position: Vector3 = Vector3.ZERO

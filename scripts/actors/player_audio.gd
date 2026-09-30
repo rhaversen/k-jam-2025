@@ -15,7 +15,11 @@ var delay = 10
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:	
-	if (!get_parent() || !get_parent().is_stressed_1()["voices"]):
+	var parent_player := get_parent()
+	if parent_player == null:
+		return
+	var voices_intensity: float = maxf(float(parent_player.is_stressed_1().get("voices", 0.0)), 0.0)
+	if voices_intensity <= 0.0:
 		return
 	
 	delay -= delta
@@ -23,10 +27,12 @@ func _process(delta: float) -> void:
 		return
 	delay = 0
 
-	if randf() <= 0.25:
+	var rate: float = maxf(voices_intensity, 0.0)
+	var trigger_probability: float = clampf(1.0 - exp(-rate), 0.0, 0.98)
+	if randf() <= trigger_probability:
 		var index = randi() % sounds.size()
 		stream = sounds[index]
 		play()
-		delay = 10
+		delay = maxf(0.4, 10.0 / (1.0 + rate * 3.0))
 	else:
-		delay = 2
+		delay = maxf(0.2, 4.0 / (1.0 + rate))
